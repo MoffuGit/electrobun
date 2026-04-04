@@ -44,7 +44,7 @@ static bool wgpuDebugEnabled() {
 #include "include/cef_application_mac.h"
 #include "include/wrapper/cef_library_loader.h"
 #include "include/wrapper/cef_helpers.h"
-#include "include/cef_request_handler.h" 
+#include "include/cef_request_handler.h"
 #include "include/cef_scheme.h"
 #include "include/cef_resource_handler.h"
 #include "include/cef_command_line.h"
@@ -390,12 +390,12 @@ static BOOL isInSyncCallback = NO;
 static NSMutableArray *queuedCallbacks = nil;
 
 // this lets you call non-threadsafe JSCallbacks on the bun worker thread, from the main thread
-// and wait for the response. 
+// and wait for the response.
 // use it like:
 // REMOVED: jsUtils.getHTMLForWebviewSync callback (now using webviewHTMLContent map)
 // });
-// 
-// DEADLOCK PREVENTION: If called recursively (e.g., during URL scheme handling), 
+//
+// DEADLOCK PREVENTION: If called recursively (e.g., during URL scheme handling),
 // queues the callback for later execution to prevent deadlocks.
 static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
     NSLog(@"callJSCallbackFromMainSync 1");
@@ -403,7 +403,7 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
         NSLog(@"Error: JS worker queue not initialized");
         return NULL;
     }
-    
+
     // Initialize queue if needed
     if (!queuedCallbacks) {
         NSLog(@"callJSCallbackFromMainSync 2");
@@ -411,7 +411,7 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
     }
 
     NSLog(@"callJSCallbackFromMainSync 3");
-    
+
     // Prevent recursive calls that can cause deadlocks
     if (isInSyncCallback) {
         NSLog(@"callJSCallbackFromMainSync 4");
@@ -423,9 +423,9 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
         return NULL;
     }
     NSLog(@"callJSCallbackFromMainSync 6");
-    
+
     isInSyncCallback = YES;
-    
+
     __block const char* result = NULL;
     __block char* resultCopy = NULL;
     NSLog(@"callJSCallbackFromMainSync 7");
@@ -433,7 +433,7 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
     NSLog(@"callJSCallbackFromMainSync 8");
     dispatch_async(jsWorkerQueue, ^{
         NSLog(@"callJSCallbackFromMainSync 9");
-        
+
         @try {
             // Call the provided block (which executes the JS callback)
             result = callback();
@@ -445,30 +445,30 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
             NSLog(@"callJSCallbackFromMainSync: Unknown exception caught during callback execution");
             result = NULL;
         }
-        
+
         // Duplicate the result so it won't be garbage collected.
         if (result != NULL) {
             NSLog(@"callJSCallbackFromMainSync 11");
             resultCopy = strdup(result);
         }
         NSLog(@"callJSCallbackFromMainSync 12");
-        
+
         dispatch_semaphore_signal(semaphore);
         NSLog(@"callJSCallbackFromMainSync 13");
     });
-    
+
     // Add timeout to prevent indefinite blocking during process failures
     dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC); // 5 second timeout
     long result_wait = dispatch_semaphore_wait(semaphore, timeout);
-    
+
     if (result_wait != 0) {
         NSLog(@"callJSCallbackFromMainSync: Timeout waiting for callback completion - possible process failure");
         isInSyncCallback = NO;
         return NULL;
     }
-    
+
     NSLog(@"callJSCallbackFromMainSync 14");
-    
+
     // Process any queued callbacks (these are typically fire-and-forget RPC calls)
     while (queuedCallbacks.count > 0) {
         NSLog(@"callJSCallbackFromMainSync 15");
@@ -489,7 +489,7 @@ static const char* callJsCallbackFromMainSync(const char* (^callback)(void)) {
             NSLog(@"callJSCallbackFromMainSync 18");
         });
     }
-    
+
     isInSyncCallback = NO;
     NSLog(@"callJSCallbackFromMainSync 19");
     return resultCopy; // Caller is responsible for freeing this memory.
@@ -525,7 +525,7 @@ typedef struct {
 
 bool isCEFAvailable() {
     NSBundle *mainBundle = [NSBundle mainBundle];
-    NSString *frameworkPath = [mainBundle.privateFrameworksPath 
+    NSString *frameworkPath = [mainBundle.privateFrameworksPath
                               stringByAppendingPathComponent:@"Chromium Embedded Framework.framework/Chromium Embedded Framework"];
     return [[NSFileManager defaultManager] fileExistsAtPath:frameworkPath];
 }
@@ -568,13 +568,13 @@ std::string GetScriptExecutionUrl(const std::string& frameUrl) {
         "file:"
         // Add other schemes as needed
     };
-    
+
     for (const auto& scheme : specialSchemes) {
         if (frameUrl.substr(0, scheme.length()) == scheme) {
             return "data://___preload.js";
         }
     }
-    
+
     return frameUrl;
 }
 
@@ -749,10 +749,10 @@ void releaseObjCObject(id objcObject) {
     - (BOOL)canGoForward;
 
     - (void)evaluateJavaScriptWithNoCompletion:(const char*)jsString;
-    - (void)callAsyncJavascript:(const char*)messageId 
-                       jsString:(const char*)jsString 
-                      webviewId:(uint32_t)webviewId 
-                  hostWebviewId:(uint32_t)hostWebviewId 
+    - (void)callAsyncJavascript:(const char*)messageId
+                       jsString:(const char*)jsString
+                      webviewId:(uint32_t)webviewId
+                  hostWebviewId:(uint32_t)hostWebviewId
               completionHandler:(callAsyncJavascriptCompletionHandler)completionHandler;
     - (void)addPreloadScriptToWebView:(const char*)jsString;
     - (void)updateCustomPreloadScript:(const char*)jsString;
@@ -816,7 +816,7 @@ static NSMutableDictionary<NSNumber *, AbstractView *> *globalAbstractViews = ni
 
 // ----------------------- URL Scheme & Navigation -----------------------
 
-@interface MyURLSchemeHandler : NSObject <WKURLSchemeHandler>    
+@interface MyURLSchemeHandler : NSObject <WKURLSchemeHandler>
     @property (nonatomic, assign) uint32_t webviewId;
     @property (nonatomic, copy) NSString *viewsRoot;
 @end
@@ -1098,9 +1098,9 @@ NSArray<NSValue *> *addOverlapRects(NSArray<NSDictionary *> *rectsArray, CGFloat
         CGFloat y = [rectDict[@"y"] floatValue];
         CGFloat w = [rectDict[@"width"] floatValue];
         CGFloat h = [rectDict[@"height"] floatValue];
-                
+
         // Note: CEF does not flip the view geometry so the measured y from the dom (origin top)
-        // needs to be inverted to work with MacOs default (y origin bottom) 
+        // needs to be inverted to work with MacOs default (y origin bottom)
         if (containerHeight > 0) {
             y = containerHeight - h - y;
         }
@@ -1163,7 +1163,7 @@ NSArray<NSValue *> *addOverlapRects(NSArray<NSDictionary *> *rectsArray, CGFloat
         [self.nsView setHidden:hidden];
     }
 
-    - (void)setPassthrough:(BOOL)enable {    
+    - (void)setPassthrough:(BOOL)enable {
         self.isMousePassthroughEnabled = enable;
         // Re-evaluate active view immediately so passthrough takes effect without mouse movement
         if (self.nsView && self.nsView.window && [self.nsView.superview isKindOfClass:[ContainerView class]]) {
@@ -1422,13 +1422,13 @@ static void schedulePendingResizeDrain() {
     - (instancetype)initWithFrame:(NSRect)frameRect {
         self = [super initWithFrame:frameRect];
         if (self) {
-            self.abstractViews = [NSMutableArray array]; 
+            self.abstractViews = [NSMutableArray array];
             [self updateTrackingAreas];
         }
         return self;
     }
 
-    - (void)updateTrackingAreas {    
+    - (void)updateTrackingAreas {
         for (NSTrackingArea *area in self.trackingAreas) {
             [self removeTrackingArea:area];
         }
@@ -1439,23 +1439,23 @@ static void schedulePendingResizeDrain() {
         [self addTrackingArea:mouseTrackingArea];
     }
 
-    - (void)mouseMoved:(NSEvent *)event {    
+    - (void)mouseMoved:(NSEvent *)event {
         NSPoint mouseLocation = [self convertPoint:[event locationInWindow] fromView:nil];
         [self updateActiveWebviewForMousePosition:mouseLocation];
     }
 
     // This function tries to figure out which "abstractView" should be interactive
     // vs mirrored, based on mouse position and layering.
-    - (void)updateActiveWebviewForMousePosition:(NSPoint)mouseLocation {    
-        BOOL stillSearching = YES;    
+    - (void)updateActiveWebviewForMousePosition:(NSPoint)mouseLocation {
+        BOOL stillSearching = YES;
 
-        for (AbstractView * abstractView in self.abstractViews) {           
+        for (AbstractView * abstractView in self.abstractViews) {
 
             if (abstractView.isMousePassthroughEnabled) {
                 [abstractView toggleMirrorMode:YES];
                 continue;
             }
-            
+
             NSView *subview = abstractView.nsView;
 
             if (stillSearching) {
@@ -1463,32 +1463,32 @@ static void schedulePendingResizeDrain() {
                 if (NSPointInRect(mouseLocation, subviewRenderLayerFrame)){// && !subview.hidden) {
                     CAShapeLayer *maskLayer = (CAShapeLayer *)subview.layer.mask;
                     CGPathRef maskPath = maskLayer ? maskLayer.path : NULL;
-                    if (maskPath) {                    
+                    if (maskPath) {
                         CGFloat mouseXInWebview = mouseLocation.x - subviewRenderLayerFrame.origin.x;
                         CGFloat mouseYInWebview = mouseLocation.y - subviewRenderLayerFrame.origin.y;
-                        
+
                         // Note: WKWebkit uses geometryFlipped so the y coordinate is from the top not the bottom
                         // (the default on osx is from the bottom). The mouse y coordinate is from the bottom
                         // so we need to invert it to match the layer geometry
-                        if (subview.layer.geometryFlipped) {                                                
-                            mouseYInWebview = subviewRenderLayerFrame.size.height - (mouseLocation.y - subviewRenderLayerFrame.origin.y);                        
+                        if (subview.layer.geometryFlipped) {
+                            mouseYInWebview = subviewRenderLayerFrame.size.height - (mouseLocation.y - subviewRenderLayerFrame.origin.y);
                         }
 
                         CGPoint mousePositionInMaskPath = CGPointMake(mouseXInWebview, mouseYInWebview);
 
-                        if (!CGPathContainsPoint(maskPath, NULL, mousePositionInMaskPath, true)) {                        
-                            [abstractView toggleMirrorMode:YES];                                                
+                        if (!CGPathContainsPoint(maskPath, NULL, mousePositionInMaskPath, true)) {
+                            [abstractView toggleMirrorMode:YES];
                             continue;
                         }
                     }
-                    
+
                     [abstractView toggleMirrorMode:NO];
                     stillSearching = NO;
                     continue;
                 }
-            }        
+            }
             [abstractView toggleMirrorMode:YES];
-        }    
+        }
     }
 
 
@@ -1906,13 +1906,13 @@ static void schedulePendingResizeDrain() {
         NSURL *url = urlSchemeTask.request.URL;
         NSData *bodyData = urlSchemeTask.request.HTTPBody;
         NSString *bodyString = bodyData ? [[NSString alloc] initWithData:bodyData encoding:NSUTF8StringEncoding] : @"";
-        
+
         NSData *data = nil;
         size_t contentLength = 0;
         const char *contentPtr = NULL;
-        
+
         NSString *urlString = url.absoluteString;
-        
+
         if ([urlString hasPrefix:@"views://"]) {
             NSString *relativePath = normalizeViewsRelativePath(urlString);
 
@@ -1929,30 +1929,30 @@ static void schedulePendingResizeDrain() {
                     data = [NSData dataWithBytes:contentPtr length:contentLength];
                 } else {
                     // Handle NULL content gracefully
-                    NSError *error = [NSError errorWithDomain:@"MyURLSchemeHandler" 
-                                                         code:404 
+                    NSError *error = [NSError errorWithDomain:@"MyURLSchemeHandler"
+                                                         code:404
                                                      userInfo:@{NSLocalizedDescriptionKey: @"Failed to load internal content"}];
                     [urlSchemeTask didFailWithError:error];
                     return;
                 }
             } else {
                 data = readViewsFileWithRoot(urlString.UTF8String, self.viewsRoot);
-                
+
                 if (data) {
                     contentPtr = (const char *)data.bytes;
                     contentLength = data.length;
                 }
-            } 
+            }
         } else {
             NSLog(@"Unknown URL format: %@", urlString);
         }
-        
+
         if (contentPtr && contentLength > 0) {
             // Determine MIME type using shared function
             std::string urlStr = [urlString UTF8String];
             std::string detectedMimeType = getMimeTypeFromUrl(urlStr);
             const char *mimeTypePtr = strdup(detectedMimeType.c_str());
-            
+
             NSString *rawMimeType = mimeTypePtr ? [NSString stringWithUTF8String:mimeTypePtr] : @"application/octet-stream";
 
             NSString *mimeType;
@@ -1964,7 +1964,7 @@ static void schedulePendingResizeDrain() {
                 // For non-text content or text content that doesn't need explicit encoding
                 mimeType = rawMimeType;
             }
-            
+
             NSURLResponse *response = [[NSURLResponse alloc] initWithURL:url
                                                     MIMEType:mimeType
                                         expectedContentLength:contentLength
@@ -1972,20 +1972,20 @@ static void schedulePendingResizeDrain() {
             [urlSchemeTask didReceiveResponse:response];
             [urlSchemeTask didReceiveData:data];
             [urlSchemeTask didFinish];
-            
+
             // Clean up memory
             if (mimeTypePtr) {
                 free((void*)mimeTypePtr);
             }
         } else {
-            NSLog(@"============== ERROR ========== empty response for URL: %@", urlString);         
+            NSLog(@"============== ERROR ========== empty response for URL: %@", urlString);
             // Notify failure properly to prevent crashes
-            NSError *error = [NSError errorWithDomain:@"MyURLSchemeHandler" 
-                                                 code:404 
+            NSError *error = [NSError errorWithDomain:@"MyURLSchemeHandler"
+                                                 code:404
                                              userInfo:@{NSLocalizedDescriptionKey: @"Resource not found"}];
             [urlSchemeTask didFailWithError:error];
         }
-       
+
     }
     - (void)webView:(WKWebView *)webView stopURLSchemeTask:(id<WKURLSchemeTask>)urlSchemeTask {
     }
@@ -2199,45 +2199,45 @@ static void schedulePendingResizeDrain() {
     createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
         forNavigationAction:(WKNavigationAction *)navigationAction
             windowFeatures:(WKWindowFeatures *)windowFeatures {
-        
+
         // Check if this is a cmd+click or a traditional popup window request
         BOOL isCmdClick = (navigationAction.modifierFlags & NSEventModifierFlagCommand) != 0;
-        BOOL isNewWindow = !navigationAction.targetFrame.isMainFrame || isCmdClick;        
-        
+        BOOL isNewWindow = !navigationAction.targetFrame.isMainFrame || isCmdClick;
+
         if (isNewWindow) {
-            NSString *eventData = [NSString stringWithFormat:@"{\"url\":\"%@\",\"isCmdClick\":%@,\"modifierFlags\":%lu}", 
-                                 navigationAction.request.URL.absoluteString, 
+            NSString *eventData = [NSString stringWithFormat:@"{\"url\":\"%@\",\"isCmdClick\":%@,\"modifierFlags\":%lu}",
+                                 navigationAction.request.URL.absoluteString,
                                  isCmdClick ? @"true" : @"false",
-                                 (unsigned long)navigationAction.modifierFlags];            
-            
-            if (self.zigEventHandler) {                
+                                 (unsigned long)navigationAction.modifierFlags];
+
+            if (self.zigEventHandler) {
                 // Use strdup to create a persistent copy of the string for the FFI callback
                 char* eventDataCopy = strdup([eventData UTF8String]);
-                self.zigEventHandler(self.webviewId, strdup("new-window-open"), eventDataCopy);                
+                self.zigEventHandler(self.webviewId, strdup("new-window-open"), eventDataCopy);
             } else {
                 NSLog(@"[NEW_WINDOW] ERROR: zigEventHandler is NULL!");
             }
         }
         return nil;
     }
-    
+
     // Handle file input elements (<input type="file">)
     - (void)webView:(WKWebView *)webView
 runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
   initiatedByFrame:(WKFrameInfo *)frame
  completionHandler:(void (^)(NSArray<NSURL *> * _Nullable URLs))completionHandler {
-        
+
         NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-        
+
         // Configure the panel based on parameters
         [openPanel setAllowsMultipleSelection:parameters.allowsMultipleSelection];
         [openPanel setCanChooseDirectories:parameters.allowsDirectories];
         [openPanel setCanChooseFiles:YES];
-        
+
         // Note: WKOpenPanelParameters doesn't expose acceptedMIMETypes in older versions
         // The file filtering will be handled by the web page's input element accept attribute
         // For now, we'll keep the dialog open to all file types and let the web page handle filtering
-        
+
         // Run the panel synchronously to avoid block capture issues
         NSInteger response = [openPanel runModal];
         if (response == NSModalResponseOK) {
@@ -2246,21 +2246,21 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             completionHandler(nil);
         }
     }
-    
+
     - (void)webView:(WKWebView *)webView
     requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
     initiatedByFrame:(WKFrameInfo *)frame
     type:(WKMediaCaptureType)type
     decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler {
-        
+
         NSString *originString = [NSString stringWithFormat:@"%@://%@", origin.protocol, origin.host];
         std::string originStd = [originString UTF8String];
-        
+
         NSLog(@"WKWebView: Media capture permission requested for %@ (type: %ld)", originString, (long)type);
-        
+
         // Check cache first
         PermissionStatus cachedStatus = getPermissionFromCache(originStd, PermissionType::USER_MEDIA);
-        
+
         if (cachedStatus == PermissionStatus::ALLOWED) {
             NSLog(@"WKWebView: Using cached permission: User previously allowed media access for %@", originString);
             decisionHandler(WKPermissionDecisionGrant);
@@ -2270,13 +2270,13 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             decisionHandler(WKPermissionDecisionDeny);
             return;
         }
-        
+
         // No cached permission, show dialog
         NSLog(@"WKWebView: No cached permission found for %@, showing dialog", originString);
-        
+
         NSString *message;
         NSString *title;
-        
+
         switch (type) {
             case WKMediaCaptureTypeCamera:
                 message = @"This page wants to access your camera.\n\nDo you want to allow this?";
@@ -2295,7 +2295,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 title = @"Media Access";
                 break;
         }
-        
+
         // Show macOS native alert
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:title];
@@ -2303,9 +2303,9 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         [alert addButtonWithTitle:@"Allow"];
         [alert addButtonWithTitle:@"Block"];
         [alert setAlertStyle:NSAlertStyleInformational];
-        
+
         NSModalResponse response = [alert runModal];
-        
+
         // Handle response and cache the decision
         if (response == NSAlertFirstButtonReturn) { // Allow
             decisionHandler(WKPermissionDecisionGrant);
@@ -2317,20 +2317,20 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             NSLog(@"WKWebView: User blocked media access for %@ (cached)", originString);
         }
     }
-    
+
     - (void)webView:(WKWebView *)webView
     requestGeolocationPermissionForOrigin:(WKSecurityOrigin *)origin
     initiatedByFrame:(WKFrameInfo *)frame
     decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler {
-        
+
         NSString *originString = [NSString stringWithFormat:@"%@://%@", origin.protocol, origin.host];
         std::string originStd = [originString UTF8String];
-        
+
         NSLog(@"WKWebView: Geolocation permission requested for %@", originString);
-        
+
         // Check cache first
         PermissionStatus cachedStatus = getPermissionFromCache(originStd, PermissionType::GEOLOCATION);
-        
+
         if (cachedStatus == PermissionStatus::ALLOWED) {
             NSLog(@"WKWebView: Using cached permission: User previously allowed location access for %@", originString);
             decisionHandler(WKPermissionDecisionGrant);
@@ -2340,13 +2340,13 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             decisionHandler(WKPermissionDecisionDeny);
             return;
         }
-        
+
         // No cached permission, show dialog
         NSLog(@"WKWebView: No cached permission found for %@, showing dialog", originString);
-        
+
         NSString *message = @"This page wants to access your location.\n\nDo you want to allow this?";
         NSString *title = @"Location Access";
-        
+
         // Show macOS native alert
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:title];
@@ -2354,9 +2354,9 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         [alert addButtonWithTitle:@"Allow"];
         [alert addButtonWithTitle:@"Block"];
         [alert setAlertStyle:NSAlertStyleInformational];
-        
+
         NSModalResponse response = [alert runModal];
-        
+
         // Handle response and cache the decision
         if (response == NSAlertFirstButtonReturn) { // Allow
             decisionHandler(WKPermissionDecisionGrant);
@@ -2386,7 +2386,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         didReceiveScriptMessage:(WKScriptMessage *)message {
         NSString *body = message.body;
         const char *bodyCStr = strdup(body.UTF8String);
-        self.zigCallback(self.webviewId, bodyCStr); 
+        self.zigCallback(self.webviewId, bodyCStr);
 
         // Note: threadsafe JSCallbacks are invoked on the js worker thread, When called frequently they
         // can build up and take longer. Meanwhile objc GC auto free's the message body and the callback
@@ -2396,7 +2396,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         // before freeing the memory
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             free((void*)bodyCStr);
-        });              
+        });
     }
 @end
 
@@ -2434,23 +2434,23 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             // TODO: rewrite this so we can return a reference to the AbstractRenderer and then call
             // init from zig after the handle is added to the webviewMap then we don't need this async stuff
             dispatch_async(dispatch_get_main_queue(), ^{
-                
+
                 // configuration
                 WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-                
+
                 configuration.websiteDataStore = createDataStoreForPartition(partitionIdentifier);
-                
-                [configuration.preferences setValue:@YES forKey:@"developerExtrasEnabled"];        
-                [configuration.preferences setValue:@YES forKey:@"elementFullscreenEnabled"];                                
-                [configuration.preferences setValue:@YES forKey:@"allowsPictureInPictureMediaPlayback"];                
-                
+
+                [configuration.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
+                [configuration.preferences setValue:@YES forKey:@"elementFullscreenEnabled"];
+                [configuration.preferences setValue:@YES forKey:@"allowsPictureInPictureMediaPlayback"];
+
                 // Add scheme handler
                 MyURLSchemeHandler *assetSchemeHandler = [[MyURLSchemeHandler alloc] init];
-                // TODO: Consider storing views handler globally and not on each AbstractView                
+                // TODO: Consider storing views handler globally and not on each AbstractView
                 assetSchemeHandler.webviewId = webviewId;
                 assetSchemeHandler.viewsRoot = viewsRootString;
                 [configuration setURLSchemeHandler:assetSchemeHandler forURLScheme:@"views"];
-                
+
                 // create WKWebView
                 self.webView = [[WKWebView alloc] initWithFrame:frame configuration:configuration];
 
@@ -2463,20 +2463,20 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 }
 
                 self.webView.autoresizingMask = NSViewNotSizable;
-                
+
                 [self.webView addObserver:self forKeyPath:@"fullscreenState" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:nil];
 
                 if (autoResize) {
                     self.fullSize = YES;
-                } else {                
+                } else {
                     self.fullSize = NO;
                 }
-                
+
                 // retainObjCObject(self.webView);
 
                 // delegates
                 MyNavigationDelegate *navigationDelegate = [[MyNavigationDelegate alloc] init];
-                navigationDelegate.zigCallback = navigationCallback;                
+                navigationDelegate.zigCallback = navigationCallback;
                 navigationDelegate.zigEventHandler = webviewEventHandler;
                 navigationDelegate.webviewId = webviewId;
                 self.webView.navigationDelegate = navigationDelegate;
@@ -2486,7 +2486,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 uiDelegate.zigEventHandler = webviewEventHandler;
                 uiDelegate.webviewId = webviewId;
                 self.webView.UIDelegate = uiDelegate;
-                objc_setAssociatedObject(self.webView, "UIDelegate", uiDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);                                    
+                objc_setAssociatedObject(self.webView, "UIDelegate", uiDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
                 // postmessage handlers
 
@@ -2543,9 +2543,9 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 ContainerView *containerView = (ContainerView *)window.contentView;
                 [containerView addAbstractView:self];
                 // self.webView.abstractView = self;
-                
-                
-                
+
+
+
                 // Note: in WkWebkit the webview is an NSView
                 self.nsView = self.webView;
 
@@ -2558,13 +2558,13 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 }
 
                 [self addPreloadScriptToWebView:electrobunPreloadScript];
-                
+
                 // Note: For custom preload scripts we support either inline js or a views:// style
                 // url to a js file in the bundled views folder.
-                if (strncmp(customPreloadScript, "views://", 8) == 0) {                    
+                if (strncmp(customPreloadScript, "views://", 8) == 0) {
                     NSData *scriptData = readViewsFileWithRoot(customPreloadScript, viewsRootString);
-                    if (scriptData) {                        
-                        NSString *scriptString = [[NSString alloc] initWithData:scriptData encoding:NSUTF8StringEncoding];                        
+                    if (scriptData) {
+                        NSString *scriptString = [[NSString alloc] initWithData:scriptData encoding:NSUTF8StringEncoding];
                         const char *scriptCString = [scriptString UTF8String];
                         [self updateCustomPreloadScript:scriptCString];
                     }
@@ -2573,20 +2573,20 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 }
 
                 // Only load URL if it's provided and no HTML content exists
-                if (url && strlen(url) > 0) {                                   
+                if (url && strlen(url) > 0) {
                     [self loadURL:url];
-                } 
-                
+                }
+
                 // associate
                 objc_setAssociatedObject(self.webView, "WKWebViewImpl", self, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             });
         }
-        
+
         // Add to global tracking map
         if (globalAbstractViews) {
             globalAbstractViews[@(self.webviewId)] = self;
         }
-        
+
         return self;
     }
 
@@ -2626,7 +2626,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 NSLog(@"ERROR: WKWebView loadHTML called but webview is nil for webview ID: %u", self.webviewId);
                 return;
             }
-            
+
             NSString *htmlNSString = (htmlString ? [NSString stringWithUTF8String:htmlString] : @"");
             NSLog(@"DEBUG WKWebView: Loading HTML content for webview %u: %.50s...", self.webviewId, htmlString);
             [self.webView loadHTMLString:htmlNSString baseURL:nil];
@@ -2634,8 +2634,8 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         });
     }
 
-    - (void)goBack {        
-            [self.webView goBack];        
+    - (void)goBack {
+            [self.webView goBack];
     }
     - (void)goForward {
         [self.webView goForward];
@@ -2762,10 +2762,10 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
         WKUserScript *script = [[WKUserScript alloc] initWithSource:code
                                                     injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                 forMainFrameOnly:false];
-        [self.webView.configuration.userContentController addUserScript:script];    
+        [self.webView.configuration.userContentController addUserScript:script];
     }
 
-    - (void)updateCustomPreloadScript:(const char*)jsString {    
+    - (void)updateCustomPreloadScript:(const char*)jsString {
         WKUserContentController *contentController = self.webView.configuration.userContentController;
         NSString *identifierComment = [NSString stringWithFormat:@"// %@\n", [NSString stringWithUTF8String:"electrobun_custom_preload_script"]];
         NSString *newScriptSource = [identifierComment stringByAppendingString:[NSString stringWithUTF8String:jsString ?: ""]];
@@ -2789,33 +2789,33 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
     - (void)observeValueForKeyPath:(NSString *)keyPath
                           ofObject:(id)object
                             change:(NSDictionary<NSKeyValueChangeKey, id> *)change
-                           context:(void *)context {        
-        
-        if (object == self.webView) {            
-            if ([keyPath isEqualToString:@"fullscreenState"]) {                
-                id newValue = change[NSKeyValueChangeNewKey];                                                
+                           context:(void *)context {
+
+        if (object == self.webView) {
+            if ([keyPath isEqualToString:@"fullscreenState"]) {
+                id newValue = change[NSKeyValueChangeNewKey];
                 NSInteger stateValue = 0;
                 if (newValue) {
-                    stateValue = [newValue integerValue];                
-                }                
-                
+                    stateValue = [newValue integerValue];
+                }
+
                 // FULLSCREEN FIX: Handle fullscreen transitions with mask store/restore
                 if (stateValue == 1) { // Entering Fullscreen
                     self.isInFullscreen = YES;
-                    
+
                     // Store the current mask before clearing it
                     self.storedLayerMask = self.webView.layer.mask;
-                    self.webView.layer.mask = nil;                                                            
+                    self.webView.layer.mask = nil;
                 } else if (stateValue == 0 || stateValue == 3) { // Not in fullscreen or exiting
                     if (self.isInFullscreen) {
                         self.isInFullscreen = NO;
-                        
+
                         // Restore the stored mask when exiting fullscreen
                         self.webView.layer.mask = self.storedLayerMask;
-                        self.storedLayerMask = nil; // Clear the stored reference                                                
-                    }                    
-                }                 
-            } 
+                        self.storedLayerMask = nil; // Clear the stored reference
+                    }
+                }
+            }
         } else {
             // Call super for non-webview objects
             [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
@@ -2951,10 +2951,13 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                             0);
     }
     - (BOOL)acceptsFirstResponder {
-        return YES;
+        return NO;
+    }
+    - (BOOL)canBecomeKeyView {
+        return NO;
     }
     - (BOOL)becomeFirstResponder {
-        return YES;
+        return NO;
     }
     - (void)keyDown:(NSEvent*)event {
         WindowDelegate *delegate = (WindowDelegate *)self.window.delegate;
@@ -3027,7 +3030,6 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 [window.contentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
                 CGFloat adjustedY = window.contentView.bounds.size.height - frame.origin.y - frame.size.height;
                 view.frame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
-                [window makeFirstResponder:view];
 
                 if (self.pendingStartTransparent) {
                     window.opaque = NO;
@@ -4024,8 +4026,8 @@ extern "C" void wgpuRunGPUTest(AbstractView* abstractView) {
 
 @implementation StatusItemTarget
     - (void)statusItemClicked:(id)sender {
-        if (self.zigHandler) {                    
-            self.zigHandler(self.trayId, "");                        
+        if (self.zigHandler) {
+            self.zigHandler(self.trayId, "");
         }
     }
     - (void)menuItemClicked:(id)sender {
@@ -4110,7 +4112,7 @@ class ElectrobunApp : public CefApp,
                      public CefRenderProcessHandler {
 public:
     ElectrobunApp() {
-        
+
     }
     void OnBeforeCommandLineProcessing(const CefString& process_type, CefRefPtr<CefCommandLine> command_line) override {
         command_line->AppendSwitchWithValue("custom-scheme", "views");
@@ -4128,32 +4130,32 @@ public:
         // Apply user-defined chromium flags from build.json
         electrobun::applyChromiumFlags(g_userChromiumFlags, command_line);
     }
-    void OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) override {        
-        registrar->AddCustomScheme("views", 
-            CEF_SCHEME_OPTION_STANDARD | 
+    void OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) override {
+        registrar->AddCustomScheme("views",
+            CEF_SCHEME_OPTION_STANDARD |
             CEF_SCHEME_OPTION_CORS_ENABLED |
             CEF_SCHEME_OPTION_SECURE | // treat it like https
             CEF_SCHEME_OPTION_CSP_BYPASSING | // allow things like crypto.subtle
             CEF_SCHEME_OPTION_FETCH_ENABLED);
-            
+
     }
-    
+
     CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
         return this;
     }
-    CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {        
+    CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
         return this;
     }
-    virtual void OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line) override {        
+    virtual void OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line) override {
         std::vector<CefString> args;
-        command_line->GetArguments(args); 
+        command_line->GetArguments(args);
 
         // Log the CEF process_helper path
         // NSLog(@"CEF helper process path: %s", command_line->GetProgram().ToString().c_str());
-        
+
         // Prevent CEF helper processes from appearing in dock
         command_line->AppendSwitch("disable-background-mode");
-        command_line->AppendSwitch("disable-backgrounding-occluded-windows");            
+        command_line->AppendSwitch("disable-backgrounding-occluded-windows");
     }
     void OnContextInitialized() override {
         // Register the scheme handler factory after context is initialized
@@ -4162,7 +4164,7 @@ public:
         //     // Skip registration in non-browser processes
         //     return;
         // }
-        
+
         // The actual factory registration will happen in getOrCreateRequestContext()
         // CefRegisterSchemeHandlerFactory("views", "", nullptr);
     }
@@ -4186,13 +4188,13 @@ private:
     PreloadScript custom_script_;
 
 public:
-    ElectrobunResponseFilter(const PreloadScript& electrobunScript, 
+    ElectrobunResponseFilter(const PreloadScript& electrobunScript,
                            const PreloadScript& customScript)
-        : has_head_(false), 
+        : has_head_(false),
           injected_(false),
           electrobun_script_(electrobunScript),
           custom_script_(customScript) {}
-    
+
     virtual FilterStatus Filter(void* data_in,
                                size_t data_in_size,
                                size_t& data_in_read,
@@ -4210,7 +4212,7 @@ public:
             return RESPONSE_FILTER_DONE;
         }
 
-        
+
         // Append the new data to our buffer
         if (data_in_size > 0) {
             buffer_.append(static_cast<char*>(data_in), data_in_size);
@@ -4218,7 +4220,7 @@ public:
         } else {
             data_in_read = 0;
         }
-        
+
         // Check if we've already injected our scripts
         if (injected_) {
             // Just copy data from our buffer to the output
@@ -4226,32 +4228,32 @@ public:
             memcpy(data_out, buffer_.c_str(), copy_size);
             buffer_.erase(0, copy_size);
             data_out_written = copy_size;
-            
+
             return buffer_.empty() ? RESPONSE_FILTER_DONE : RESPONSE_FILTER_NEED_MORE_DATA;
         }
-        
+
         // Look for <head> tag if we haven't found it yet
         if (!has_head_) {
             size_t head_pos = buffer_.find("<head>");
             if (head_pos != std::string::npos) {
                 has_head_ = true;
-                
+
                 // Inject our scripts after the <head> tag
                 std::string scripts = "<script>\n";
                 scripts += electrobun_script_.code;
                 scripts += "\n</script>\n";
-                
+
                 if (!custom_script_.code.empty()) {
                     scripts += "<script>\n";
                     scripts += custom_script_.code;
                     scripts += "\n</script>\n";
                 }
-                
+
                 buffer_.insert(head_pos + 6, scripts);  // Insert after <head>
                 injected_ = true;
             }
         }
-        
+
         // If we still haven't found <head> but the buffer is getting large,
         // we should check for <html> or just inject at the beginning
         if (!has_head_ && buffer_.size() > 1024) {
@@ -4261,31 +4263,31 @@ public:
                 std::string scripts = "<head>\n<script>\n";
                 scripts += electrobun_script_.code;
                 scripts += "\n</script>\n";
-                
+
                 if (!custom_script_.code.empty() ) {
                     scripts += "<script>\n";
                     scripts += custom_script_.code;
                     scripts += "\n</script>\n";
                 }
-                
+
                 scripts += "</head>\n";
-                
+
                 buffer_.insert(html_pos + 6, scripts);  // Insert after <html>
             } else {
                 // As a last resort, inject at the beginning
                 std::string scripts = "<script>\n";
                 scripts += electrobun_script_.code;
                 scripts += "\n</script>\n";
-                
+
                 if (!custom_script_.code.empty() ) {
                     scripts += "<script>\n";
                     scripts += custom_script_.code;
                     scripts += "\n</script>\n";
                 }
-                
+
                 buffer_.insert(0, scripts);
             }
-            
+
             injected_ = true;
         }
 
@@ -4294,7 +4296,7 @@ public:
         memcpy(data_out, buffer_.c_str(), copy_size);
         buffer_.erase(0, copy_size);
         data_out_written = copy_size;
-        
+
         return buffer_.empty() ? RESPONSE_FILTER_DONE : RESPONSE_FILTER_NEED_MORE_DATA;
     }
 
@@ -4305,7 +4307,7 @@ public:
         injected_ = false;
         return true;
     }
-    
+
     IMPLEMENT_REFCOUNTING(ElectrobunResponseFilter);
 };
 
@@ -4342,7 +4344,7 @@ private:
     static const int MENU_ID_DEV_TOOLS = 1;
 
     // Track download paths by download ID
-    std::map<uint32_t, std::string> download_paths_; 
+    std::map<uint32_t, std::string> download_paths_;
 
     struct DevToolsHost {
         NSWindow* window = nil;
@@ -4359,7 +4361,7 @@ private:
     std::string EscapeJavaScriptString(const std::string& input) {
         std::string result;
         result.reserve(input.size() * 2);  // Reserve space to avoid multiple allocations
-        
+
         for (char c : input) {
             switch (c) {
                 case '\\': result += "\\\\"; break;
@@ -4381,7 +4383,7 @@ private:
                     }
             }
         }
-        
+
         return result;
     }
 
@@ -4602,7 +4604,7 @@ public:
         , webview_tag_handler_(internalBridgeHandler)
         , webview_event_handler_(webviewEventHandler)
         , navigation_callback_(navigationCallback)
-        , is_sandboxed_(sandbox) {}    
+        , is_sandboxed_(sandbox) {}
 
     void AddPreloadScript(const std::string& script, bool mainFrameOnly = false) {
         electrobun_script_ = {script, false};
@@ -4627,22 +4629,22 @@ public:
         return osr_enabled_;
     }
 
-    virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override { 
-        return this; 
+    virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override {
+        return this;
     }
 
     virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override {
         return this;
     }
 
-    virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override { 
-        return this; 
+    virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
+        return this;
     }
-    
+
     virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override {
         return this;
     }
-    
+
     virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override {
         return this;
     }
@@ -4807,7 +4809,7 @@ public:
                        bool is_redirect) override {
         std::string url = request->GetURL().ToString();
 
-       
+
         // Check if cmd key is held - if so, fire new-window-open event and block navigation
         // Use NSEvent to get current modifier flags since CEF doesn't provide them in OnBeforeBrowse
         // Note: We don't check user_gesture because SPA frameworks may trigger navigations
@@ -4889,33 +4891,33 @@ public:
         // Return this object as the resource request handler
         return this;
     }
-    
+
     // Response filter to modify HTML content
     CefRefPtr<CefResponseFilter> GetResourceResponseFilter(
         CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
         CefRefPtr<CefRequest> request,
         CefRefPtr<CefResponse> response) override {
-        
+
         // Only filter main frame HTML responses
-        if (frame->IsMain() && 
+        if (frame->IsMain() &&
             response->GetMimeType().ToString().find("html") != std::string::npos) {
             NSLog(@"Creating response filter for HTML content");
             return new ElectrobunResponseFilter(electrobun_script_, custom_script_);
         }
-        
+
         return nullptr;
     }
 
     virtual void OnLoadStart(CefRefPtr<CefBrowser> browser,
                            CefRefPtr<CefFrame> frame,
-                           TransitionType transition_type) override {    
+                           TransitionType transition_type) override {
 
         std::string frameUrl = frame->GetURL().ToString();
         std::string scriptUrl = GetScriptExecutionUrl(frameUrl);
 
-        // NSLog(@"OnLoadStart %s", frameUrl.c_str());//, electrobun_script_.code.c_str());           
-    }   
+        // NSLog(@"OnLoadStart %s", frameUrl.c_str());//, electrobun_script_.code.c_str());
+    }
 
     void OnLoadEnd(CefRefPtr<CefBrowser> browser,
                   CefRefPtr<CefFrame> frame,
@@ -4938,10 +4940,10 @@ public:
                                      CefRefPtr<CefFrame> frame,
                                      CefProcessId source_process,
                                      CefRefPtr<CefProcessMessage> message) override {
-    
+
     std::string messageName = message->GetName().ToString();
     std::string messageContent = message->GetArgumentList()->GetString(0).ToString();
-    
+
     char* contentCopy = strdup(messageContent.c_str());
     bool result = false;
 
@@ -4969,8 +4971,8 @@ public:
     // before freeing the memory
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         free((void*)contentCopy);
-    });   
-    
+    });
+
     return result;
 }
 
@@ -5035,28 +5037,28 @@ public:
                       CefRefPtr<CefDictionaryValue>& extra_info,
                       bool* no_javascript_access) override {
         CEF_REQUIRE_UI_THREAD();
-        
+
         // Check if this is a new window request (cmd+click, target="_blank", window.open, etc.)
-        bool isCmdClick = target_disposition == CEF_WOD_NEW_FOREGROUND_TAB || 
+        bool isCmdClick = target_disposition == CEF_WOD_NEW_FOREGROUND_TAB ||
                          target_disposition == CEF_WOD_NEW_BACKGROUND_TAB ||
-                         target_disposition == CEF_WOD_NEW_WINDOW;        
-        
+                         target_disposition == CEF_WOD_NEW_WINDOW;
+
         // Create event data with more context
-        std::string eventData = "{\"url\":\"" + target_url.ToString() + 
+        std::string eventData = "{\"url\":\"" + target_url.ToString() +
                                "\",\"isCmdClick\":" + (isCmdClick ? "true" : "false") +
                                ",\"targetDisposition\":" + std::to_string(target_disposition) +
                                ",\"userGesture\":" + (user_gesture ? "true" : "false") + "}";
-                
-        
+
+
         // Send the new window event
-        if (webview_event_handler_) {            
+        if (webview_event_handler_) {
             // Use strdup to create a persistent copy of the string for the FFI callback
             char* eventDataCopy = strdup(eventData.c_str());
-            webview_event_handler_(webview_id_, strdup("new-window-open"), eventDataCopy);            
+            webview_event_handler_(webview_id_, strdup("new-window-open"), eventDataCopy);
         } else {
             NSLog(@"[CEF_NEW_WINDOW] ERROR: webview_event_handler_ is NULL!");
         }
-        
+
         // Prevent the popup from actually opening by returning true
         return true;
     }
@@ -5064,12 +5066,12 @@ public:
     bool OnKeyEvent(CefRefPtr<CefBrowser> browser,
                const CefKeyEvent& event,
                CefEventHandle os_event) override {
-       
+
 
         bool hasCommand = (event.modifiers & EVENTFLAG_COMMAND_DOWN) != 0;
-        bool hasOption = (event.modifiers & EVENTFLAG_ALT_DOWN) != 0;                
+        bool hasOption = (event.modifiers & EVENTFLAG_ALT_DOWN) != 0;
 
-                
+
         if (event.type == KEYEVENT_RAWKEYDOWN) {
             // Note: option changes the character for i, so we use the native_key_code
             // for the i key instead. cmd+option+i
@@ -5084,16 +5086,16 @@ public:
                 });
                 return true;
             }
-            
+
             // Handle ESC key to exit fullscreen (try both key codes)
             if (event.windows_key_code == 27 || event.native_key_code == 53) {
                 browser->GetHost()->ExitFullscreen(false);
                 return true;
-            }                        
+            }
         }
         return false;
     }
-    
+
     // Permission Handler methods for CEF
     virtual bool OnRequestMediaAccessPermission(
         CefRefPtr<CefBrowser> browser,
@@ -5101,13 +5103,13 @@ public:
         const CefString& requesting_origin,
         uint32_t requested_permissions,
         CefRefPtr<CefMediaAccessCallback> callback) override {
-        
+
         std::string origin = requesting_origin.ToString();
         NSLog(@"CEF: Media access permission requested for %s (permissions: %u)", origin.c_str(), requested_permissions);
-        
+
         // Check cache first
         PermissionStatus cachedStatus = getPermissionFromCache(origin, PermissionType::USER_MEDIA);
-        
+
         if (cachedStatus == PermissionStatus::ALLOWED) {
             NSLog(@"CEF: Using cached permission: User previously allowed media access for %s", origin.c_str());
             callback->Continue(requested_permissions); // Allow all requested permissions
@@ -5117,23 +5119,23 @@ public:
             callback->Cancel();
             return true;
         }
-        
+
         // No cached permission, show dialog
         NSLog(@"CEF: No cached permission found for %s, showing dialog", origin.c_str());
-        
+
         // Show macOS native alert
         NSString *message = @"This page wants to access your camera and/or microphone.\n\nDo you want to allow this?";
         NSString *title = @"Camera & Microphone Access";
-        
+
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:title];
         [alert setInformativeText:message];
         [alert addButtonWithTitle:@"Allow"];
         [alert addButtonWithTitle:@"Block"];
         [alert setAlertStyle:NSAlertStyleInformational];
-        
+
         NSModalResponse response = [alert runModal];
-        
+
         // Handle response and cache the decision
         if (response == NSAlertFirstButtonReturn) { // Allow
             callback->Continue(requested_permissions); // Allow all requested permissions
@@ -5144,25 +5146,25 @@ public:
             cachePermission(origin, PermissionType::USER_MEDIA, PermissionStatus::DENIED);
             NSLog(@"CEF: User blocked media access for %s (cached)", origin.c_str());
         }
-        
+
         return true; // We handled the permission request
     }
-    
+
     virtual bool OnShowPermissionPrompt(
         CefRefPtr<CefBrowser> browser,
         uint64_t prompt_id,
         const CefString& requesting_origin,
         uint32_t requested_permissions,
         CefRefPtr<CefPermissionPromptCallback> callback) override {
-        
+
         std::string origin = requesting_origin.ToString();
         NSLog(@"CEF: Permission prompt requested for %s (permissions: %u)", origin.c_str(), requested_permissions);
-        
+
         // Handle different permission types
         PermissionType permType = PermissionType::OTHER;
         NSString *message = @"This page is requesting additional permissions.\n\nDo you want to allow this?";
         NSString *title = @"Permission Request";
-        
+
         // Check for specific permission types
         if (requested_permissions & CEF_PERMISSION_TYPE_CAMERA_STREAM ||
             requested_permissions & CEF_PERMISSION_TYPE_MIC_STREAM) {
@@ -5178,10 +5180,10 @@ public:
             message = @"This page wants to show notifications.\n\nDo you want to allow this?";
             title = @"Notification Permission";
         }
-        
+
         // Check cache first
         PermissionStatus cachedStatus = getPermissionFromCache(origin, permType);
-        
+
         if (cachedStatus == PermissionStatus::ALLOWED) {
             NSLog(@"CEF: Using cached permission: User previously allowed %@ for %s", title, origin.c_str());
             callback->Continue(CEF_PERMISSION_RESULT_ACCEPT);
@@ -5191,10 +5193,10 @@ public:
             callback->Continue(CEF_PERMISSION_RESULT_DENY);
             return true;
         }
-        
+
         // No cached permission, show dialog
         NSLog(@"CEF: No cached permission found for %s, showing dialog", origin.c_str());
-        
+
         // Show macOS native alert
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:title];
@@ -5202,9 +5204,9 @@ public:
         [alert addButtonWithTitle:@"Allow"];
         [alert addButtonWithTitle:@"Block"];
         [alert setAlertStyle:NSAlertStyleInformational];
-        
+
         NSModalResponse response = [alert runModal];
-        
+
         // Handle response and cache the decision
         if (response == NSAlertFirstButtonReturn) { // Allow
             callback->Continue(CEF_PERMISSION_RESULT_ACCEPT);
@@ -5215,19 +5217,19 @@ public:
             cachePermission(origin, permType, PermissionStatus::DENIED);
             NSLog(@"CEF: User blocked %@ for %s (cached)", title, origin.c_str());
         }
-        
+
         return true; // We handled the permission request
     }
-    
+
     virtual void OnDismissPermissionPrompt(
         CefRefPtr<CefBrowser> browser,
         uint64_t prompt_id,
         cef_permission_request_result_t result) override {
-        
+
         NSLog(@"CEF: Permission prompt %llu dismissed with result %d", prompt_id, result);
         // Optional: Handle prompt dismissal if needed
     }
-    
+
     // CefDialogHandler methods - commented out for now to prevent crashes
     // TODO: Fix CEF reference counting issues in Objective-C blocks
     /*
@@ -5249,68 +5251,68 @@ public:
     NSWindow* originalWindow_;
     CALayer* storedLayerMask_;
     id globalKeyMonitor_;
-    
+
     // CefDisplayHandler methods
     virtual void OnFullscreenModeChange(CefRefPtr<CefBrowser> browser,
                                        bool fullscreen) override {
         CEF_REQUIRE_UI_THREAD();
-        
-        NSLog(@"[CEF_FULLSCREEN] OnFullscreenModeChange called - fullscreen: %s for webview %u", 
+
+        NSLog(@"[CEF_FULLSCREEN] OnFullscreenModeChange called - fullscreen: %s for webview %u",
               fullscreen ? "YES" : "NO", webview_id_);
-        
+
         if (!browser || !browser->GetHost()) {
             return;
         }
-        
+
         CefWindowHandle handle = browser->GetHost()->GetWindowHandle();
         if (!handle) {
             return;
         }
-        
+
         NSView* cefView = (__bridge NSView*)handle;
-        
+
         if (fullscreen) {
             NSLog(@"[CEF_FULLSCREEN] Entering fullscreen for webview %u", webview_id_);
-            
+
             // Store original state
             storedFrame_ = cefView.frame;
             storedSuperview_ = cefView.superview;
             originalWindow_ = cefView.window;
-            
+
             // Store and clear the layer mask (this was causing cropping in WKWebView too)
             storedLayerMask_ = cefView.layer.mask;
             cefView.layer.mask = nil;
             NSLog(@"[CEF_FULLSCREEN] Stored and cleared layer mask for webview %u", webview_id_);
-            
+
             // Create a new fullscreen window
             NSScreen* screen = [NSScreen mainScreen];
             NSRect screenFrame = screen.frame;
-            
+
             fullscreenWindow_ = [[NSWindow alloc] initWithContentRect:screenFrame
                                                             styleMask:NSWindowStyleMaskBorderless
                                                               backing:NSBackingStoreBuffered
                                                                 defer:NO];
-            
+
             fullscreenWindow_.level = NSScreenSaverWindowLevel;
             fullscreenWindow_.backgroundColor = [NSColor blackColor];
             fullscreenWindow_.opaque = YES;
             fullscreenWindow_.hasShadow = NO;
-            
+
             // Remove CEF view from original location and add to fullscreen window
             [cefView removeFromSuperview];
             [fullscreenWindow_.contentView addSubview:cefView];
-            
+
             // Make CEF view fill the fullscreen window
             cefView.frame = fullscreenWindow_.contentView.bounds;
             cefView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-            
+
             // Show the fullscreen window
             [fullscreenWindow_ makeKeyAndOrderFront:nil];
             [fullscreenWindow_ setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
             [fullscreenWindow_ toggleFullScreen:nil];
-            
+
             // Add local key monitor for ESC key (works even when our app has focus)
-            globalKeyMonitor_ = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown 
+            globalKeyMonitor_ = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
                                 handler:^NSEvent*(NSEvent *event) {
                 if (event.keyCode == 53) { // ESC key code on macOS
                     NSLog(@"[CEF_FULLSCREEN] Local ESC key detected - exiting fullscreen for webview %u", webview_id_);
@@ -5321,52 +5323,52 @@ public:
                 }
                 return event; // Let other events through
             }];
-            
+
             // Notify CEF of the size change
             browser->GetHost()->WasResized();
-            
-            NSLog(@"[CEF_FULLSCREEN] Created fullscreen window, CEF view size: %.0fx%.0f", 
+
+            NSLog(@"[CEF_FULLSCREEN] Created fullscreen window, CEF view size: %.0fx%.0f",
                   cefView.frame.size.width, cefView.frame.size.height);
-            
+
         } else {
             NSLog(@"[CEF_FULLSCREEN] Exiting fullscreen for webview %u", webview_id_);
-            
+
             // Exit fullscreen on the fullscreen window
             if (fullscreenWindow_) {
                 // Remove global key monitor
                 if (globalKeyMonitor_) {
                     [NSEvent removeMonitor:globalKeyMonitor_];
-                    globalKeyMonitor_ = nil;                    
+                    globalKeyMonitor_ = nil;
                 }
-                
+
                 // First exit fullscreen mode on temp window, then delay reparenting
                 NSWindow* tempWindow = fullscreenWindow_;
                 fullscreenWindow_ = nil; // Clear reference immediately
-                
-                if ((tempWindow.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen) {                    
+
+                if ((tempWindow.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen) {
                     [tempWindow toggleFullScreen:nil];
-                    
+
                     // Capture references before dispatch block
                     NSView* capturedCefView = cefView;
                     NSView* capturedSuperview = storedSuperview_;
                     NSRect capturedFrame = storedFrame_;
                     CALayer* capturedMask = storedLayerMask_;
                     NSWindow* capturedOriginalWindow = originalWindow_;
-                    
+
                     // Clear instance variables to prevent double cleanup
                     storedSuperview_ = nil;
                     originalWindow_ = nil;
                     storedLayerMask_ = nil;
-                    
+
                     // Wait for fullscreen exit animation before reparenting CEF view
                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
                         // NSLog(@"[CEF_FULLSCREEN] Fullscreen exit complete - now reparenting CEF view");
-                        
+
                         // Make temp window transparent first to reduce flicker
                         [tempWindow setAlphaValue:0.0];
-                        
+
                         // NSLog(@"[CEF_FULLSCREEN] Hidden temp fullscreen window");
-                        
+
                         // Now do the reparenting after temp window is hidden
                         if (capturedCefView && capturedSuperview) {
                             // Make original window key before reparenting to ensure smooth transition
@@ -5374,21 +5376,21 @@ public:
                                 [capturedOriginalWindow makeKeyAndOrderFront:nil];
                                 // NSLog(@"[CEF_FULLSCREEN] Restored original window as key");
                             }
-                            
+
                             // NSLog(@"[CEF_FULLSCREEN] Removing CEF view from fullscreen window");
                             [capturedCefView removeFromSuperview];
-                            
+
                             // NSLog(@"[CEF_FULLSCREEN] Restoring CEF view to original parent");
                             [capturedSuperview addSubview:capturedCefView];
                             capturedCefView.frame = capturedFrame;
                             capturedCefView.autoresizingMask = NSViewNotSizable;
-                            
+
                             // Restore the layer mask
                             if (capturedMask) {
                                 capturedCefView.layer.mask = capturedMask;
                                 NSLog(@"[CEF_FULLSCREEN] Restored layer mask for webview %u", webview_id_);
                             }
-                            
+
                             // Notify CEF of the size change after everything is in place
                             browser->GetHost()->WasResized();
                         } else {
@@ -5401,31 +5403,31 @@ public:
                     if (cefView && storedSuperview_) {
                         NSLog(@"[CEF_FULLSCREEN] Removing CEF view from fullscreen window");
                         [cefView removeFromSuperview];
-                        
+
                         NSLog(@"[CEF_FULLSCREEN] Restoring CEF view to original parent");
                         [storedSuperview_ addSubview:cefView];
                         cefView.frame = storedFrame_;
                         cefView.autoresizingMask = NSViewNotSizable;
-                        
+
                         // Restore the layer mask
                         if (storedLayerMask_) {
                             cefView.layer.mask = storedLayerMask_;
                             storedLayerMask_ = nil;
                             NSLog(@"[CEF_FULLSCREEN] Restored layer mask for webview %u", webview_id_);
                         }
-                        
+
                         browser->GetHost()->WasResized();
                     }
-                    
+
                     if (originalWindow_) {
                         [originalWindow_ makeKeyAndOrderFront:nil];
                         NSLog(@"[CEF_FULLSCREEN] Restored original window as key");
                     }
-                    
+
                     [tempWindow orderOut:nil];
                 }
             }
-            
+
             // Note: storedSuperview_, originalWindow_, and storedLayerMask_ are cleared
             // either in the dispatch block above or in the immediate reparenting case
         }
@@ -5476,9 +5478,9 @@ void RemoteDevToolsClosed(void* ctx, int target_id) {
 bool initializeCEF() {
     static bool initialized = false;
     if (initialized) return true;
-    
+
     [ElectrobunNSApplication sharedApplication];
-    if (![NSApp isKindOfClass:[ElectrobunNSApplication class]]) {        
+    if (![NSApp isKindOfClass:[ElectrobunNSApplication class]]) {
         return false;
     }
 
@@ -5489,7 +5491,7 @@ bool initializeCEF() {
     for (int i = 0; i < argc; i++) {
         argv[i] = strdup([[arguments objectAtIndex:i] UTF8String]);
     }
-    
+
     CefMainArgs main_args(argc, argv);
     g_app = new ElectrobunApp();
 
@@ -5535,7 +5537,7 @@ bool initializeCEF() {
         CefString(&settings.browser_subprocess_path) = [helperPath UTF8String];
         NSLog(@"[CEF] Using helper at: %@", helperPath);
     }
-    
+
     // Add cache path to prevent warnings and potential issues
      // Use app-specific cache directory to allow multiple Electrobun apps to run simultaneously
     NSString* appSupportPath = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject];
@@ -5553,39 +5555,39 @@ bool initializeCEF() {
 
     // Set log file path for debugging
     NSString* logPath = [cachePath stringByAppendingPathComponent:@"debug.log"];
-    CefString(&settings.log_file) = [logPath UTF8String];    
-    
+    CefString(&settings.log_file) = [logPath UTF8String];
+
     // Enable network service
     // settings.packaged_services = cef_services_t::CEF_SERVICE_ALL;
-    
+
     // Set language
     CefString(&settings.accept_language_list) = "en-US,en";
-    
+
     // Register custom scheme
     // CefRegisterSchemeHandlerFactory("views", "", new ElectrobunSchemeHandlerFactory(assetFileLoader, 0));
-    
+
     // Make CEF aware of the custom scheme
     // CefCommandLine::GetGlobalCommandLine()->AppendSwitch("register-scheme-handler");
     // CefCommandLine::GetGlobalCommandLine()->AppendSwitchWithValue("custom-scheme", "views");
-    
+
     // Enable file access and modern web APIs
     // Note: Some command line switches can cause CEF crashes, commenting out for now
     // CefRefPtr<CefCommandLine> commandLine = CefCommandLine::GetGlobalCommandLine();
     // commandLine->AppendSwitch("allow-file-access-from-files");
     // commandLine->AppendSwitch("allow-universal-access-from-files");
     // commandLine->AppendSwitch("disable-web-security");
-    
+
     // Enable required packaged services
-    // settings.packaged_services = cef_services_t::CEF_SERVICE_ALL;    
+    // settings.packaged_services = cef_services_t::CEF_SERVICE_ALL;
     bool result = CefInitialize(main_args, settings, g_app.get(), nullptr);
 
     for (int i = 0; i < argc; i++) free(argv[i]);
     free(argv);
-    
-    if (!result) {        
+
+    if (!result) {
         return false;
     }
-    
+
     initialized = true;
     return true;
 }
@@ -5602,25 +5604,25 @@ public:
             CefRefPtr<CefCallback> callback) override {
 
         std::string urlStr = request->GetURL().ToString();
-        
+
         // CEF calls Open from a worker thread, so we need to handle this on the main thread
         // to avoid threading issues with Bun's JS runtime
         __block std::string responseDataBlock;
         __block std::string mimeTypeBlock;
         __block bool hasResponseBlock = false;
-        
+
         dispatch_sync(dispatch_get_main_queue(), ^{
             responseData_.clear();
             hasResponse_ = false;
             offset_ = 0;
-            
+
             // If the URL starts with "views://"
             if (urlStr.find("views://") == 0) {
                 NSLog(@"DEBUG CEF: Processing views:// URL: %s", urlStr.c_str());
                 // Remove the prefix (8 characters for "views://") - FIXED VERSION v2
                 std::string relativePath = urlStr.substr(8);
                 NSLog(@"DEBUG CEF FIXED: relativePath = '%s'", relativePath.c_str());
-                
+
                 // Check if this is the internal HTML request.
                 NSLog(@"DEBUG CEF: Comparing relativePath '%s' with 'internal/index.html'", relativePath.c_str());
                 if (relativePath == "internal/index.html") {
@@ -5634,7 +5636,7 @@ public:
                     } else {
                         NSLog(@"DEBUG CEF: Retrieved HTML content for webview %u", webviewId_);
                     }
-                    
+
                     if (htmlContent) {
                         size_t len = strlen(htmlContent);
                         NSLog(@"DEBUG CEF: HTML content length: %zu, content preview: %.100s", len, htmlContent);
@@ -5648,14 +5650,14 @@ public:
                 } else {
                     NSLog(@"DEBUG CEF: Attempting to read views file: %s", urlStr.c_str());
                     NSData *data = readViewsFile(urlStr.c_str());
-                    if (data) {   
+                    if (data) {
                         NSLog(@"DEBUG CEF: Successfully read views file, length: %lu", (unsigned long)data.length);
                         // Determine MIME type using shared function
                         std::string mimeType = getMimeTypeFromUrl(relativePath);
                         const char* mimeTypePtr = strdup(mimeType.c_str());
                         NSLog(@"DEBUG CEF: Set MIME type '%s' for file: %s", mimeType.c_str(), relativePath.c_str());
                         // REMOVED: jsUtils.getMimeType callback (now using file extension detection)
-                        
+
                         if (mimeTypePtr) {
                             mimeTypeBlock = std::string(mimeTypePtr);
                             free((void*)mimeTypePtr); // Free the strdup'd memory
@@ -5675,7 +5677,7 @@ public:
                 NSLog(@"Unknown URL format: %s", urlStr.c_str());
             }
         });
-        
+
         // Copy the results back to the member variables
         mimeType_ = mimeTypeBlock;
         responseData_.assign(responseDataBlock.begin(), responseDataBlock.end());
@@ -5747,26 +5749,26 @@ public:
                                          CefRefPtr<CefFrame> frame,
                                          const CefString& scheme_name,
                                          CefRefPtr<CefRequest> request) override {
-    
+
     NSLog(@"DEBUG CEF Factory: Create called for URL: %s", request->GetURL().ToString().c_str());
-    
+
     // Get webview ID from browser ID
     std::lock_guard<std::mutex> lock(browserMapMutex);
     int browserId = browser->GetIdentifier();
     auto it = browserToWebviewMap.find(browserId);
     uint32_t webviewId = (it != browserToWebviewMap.end()) ? it->second : 0;
-    
+
     NSLog(@"DEBUG CEF Factory: Creating handler for browser %d -> webview %u", browserId, webviewId);
-    
+
     // Debug: print all current mappings
     NSLog(@"DEBUG CEF Factory: Current browser-to-webview mappings:");
     for (const auto& pair : browserToWebviewMap) {
         NSLog(@"  Browser %d -> Webview %u", pair.first, pair.second);
     }
-    
+
     return new ElectrobunSchemeHandler(webviewId);
   }
-  
+
   IMPLEMENT_REFCOUNTING(ElectrobunSchemeHandlerFactory);
   DISALLOW_COPY_AND_ASSIGN(ElectrobunSchemeHandlerFactory);
 };
@@ -5918,23 +5920,23 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
                 if (transparent && self.osrView) {
                     self.client->SetOSRView(self.osrView);
                     self.client->SetViewSize((int)frame.size.width, (int)frame.size.height);
-                }                
+                }
 
                 // store the script values
                 [self addPreloadScriptToWebView:electrobunPreloadScript];
-                
+
                 // Note: For custom preload scripts we support either inline js or a views:// style
                 // url to a js file in the bundled views folder.
-                if (strncmp(customPreloadScript, "views://", 8) == 0) {                    
+                if (strncmp(customPreloadScript, "views://", 8) == 0) {
                     NSData *scriptData = readViewsFile(customPreloadScript);
-                    if (scriptData) {                        
-                        NSString *scriptString = [[NSString alloc] initWithData:scriptData encoding:NSUTF8StringEncoding];                        
+                    if (scriptData) {
+                        NSString *scriptString = [[NSString alloc] initWithData:scriptData encoding:NSUTF8StringEncoding];
                         const char *scriptCString = [scriptString UTF8String];
                         [self updateCustomPreloadScript:scriptCString];
                     }
                 } else {
                     [self updateCustomPreloadScript:customPreloadScript];
-                }                            
+                }
 
 
                 // Note: We must create a browser with about:blank first so that self.browser can be set
@@ -5993,7 +5995,7 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
                     self.browser->GetMainFrame()->LoadURL(CefString(url));
                 }
             };
-            
+
             // TODO: revisit bug with 3+ CEF windows created in rapid succession - the 3rd window's
             // OOPIF fails to initialize/render. Windows 1 & 2 work fine. Separately opened windows
             // also work. Likely a race condition in concurrent browser creation.
@@ -6006,11 +6008,11 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
                                 object:window
                                     queue:[NSOperationQueue mainQueue]
                             usingBlock:^(NSNotification *note) {
-                    
+
                     if (!hasCreatedBrowser) {
-                        hasCreatedBrowser = YES;                    
+                        hasCreatedBrowser = YES;
                         createCEFBrowser();
-                        
+
                     }
                 }];
             }
@@ -6025,24 +6027,24 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
                                                                     object:window];
             });
 
-    
-            // dispatch_async(dispatch_get_main_queue(), ^{               
+
+            // dispatch_async(dispatch_get_main_queue(), ^{
                 // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 //     createCEFBrowser();
                 //     NSLog(@"-----------------> DISPATCH 1");
                 // });
             // });
 
-            
+
         }
-        
+
         // Add to global tracking map
         if (globalAbstractViews) {
             globalAbstractViews[@(self.webviewId)] = self;
         } else {
             NSLog(@"CEFWebViewImpl: ERROR - globalAbstractViews is nil when trying to add webview %u", self.webviewId);
         }
-        
+
         return self;
     }
 
@@ -6066,7 +6068,7 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         self.browser->GetMainFrame()->LoadURL(CefString("views://internal/index.html"));
     }
 
-    - (void)goBack {   
+    - (void)goBack {
         if (self.browser)
             self.browser->GoBack();
     }
@@ -6082,7 +6084,7 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
     }
 
     - (void)remove {
-        
+
         // Stop loading, close the browser, remove from superview, etc.
         if (self.browser) {
             NSLog(@"CEFWebViewImpl remove: closing CEF browser for webview %u", self.webviewId);
@@ -6093,9 +6095,9 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         } else {
             NSLog(@"CEFWebViewImpl remove: browser is already null for webview %u", self.webviewId);
         }
-        
+
         if (self.nsView) {
-            
+
             // Remove from ContainerView's tracking array first
             if (self.nsView.superview && [self.nsView.superview isKindOfClass:[ContainerView class]]) {
                 ContainerView *containerView = (ContainerView *)self.nsView.superview;
@@ -6104,23 +6106,23 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
             } else {
                 NSLog(@"CEFWebViewImpl remove: superview is not ContainerView or is nil");
             }
-            
+
             // Keep a weak reference to the view for delayed removal
             NSView *viewToRemove = self.nsView;
             uint32_t webviewIdForLogging = self.webviewId;
-            
+
             // Set nsView to nil immediately to prevent further operations
             NSLog(@"CEFWebViewImpl remove: setting nsView to nil for webview %u", self.webviewId);
             self.nsView = nil;
-            
+
             // Check if the view is still in a superview before trying to remove it
             if (viewToRemove.superview != nil) {
                 NSLog(@"CEFWebViewImpl remove: scheduling delayed removeFromSuperview for webview %u", webviewIdForLogging);
-                
+
                 // Delay the removeFromSuperview call to allow CEF to finish cleanup
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSLog(@"CEFWebViewImpl remove: executing delayed removeFromSuperview for webview %u", webviewIdForLogging);
-                    
+
                     @try {
                         // Double-check superview still exists at execution time
                         if (viewToRemove.superview != nil) {
@@ -6141,7 +6143,7 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         } else {
             NSLog(@"CEFWebViewImpl remove: nsView is already nil for webview %u", self.webviewId);
         }
-        
+
         NSLog(@"CEFWebViewImpl remove: COMPLETED cleanup for webview %u", self.webviewId);
     }
 
@@ -6156,11 +6158,11 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         return self.browser->CanGoForward() ? YES : NO;
     }
 
-    - (void)evaluateJavaScriptWithNoCompletion:(const char*)jsString {    
+    - (void)evaluateJavaScriptWithNoCompletion:(const char*)jsString {
         if (!jsString) return;
-        
+
         CefRefPtr<CefFrame> mainFrame = self.browser->GetMainFrame();
-        
+
         if (!mainFrame) {
             NSLog(@"[CEF] Failed to get main frame for JavaScript evaluation");
             return;
@@ -6174,20 +6176,20 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         );
     }
 
-    - (void)callAsyncJavascript:(const char*)messageId 
-                    jsString:(const char*)jsString 
-                    webviewId:(uint32_t)webviewId 
-                hostWebviewId:(uint32_t)hostWebviewId 
+    - (void)callAsyncJavascript:(const char*)messageId
+                    jsString:(const char*)jsString
+                    webviewId:(uint32_t)webviewId
+                hostWebviewId:(uint32_t)hostWebviewId
             completionHandler:(callAsyncJavascriptCompletionHandler)completionHandler {
-        
+
 
         NSLog(@"TODO: Implement callAsyncJavascript for CEF when refactoring the entire RPC system");
-        completionHandler(messageId, webviewId, hostWebviewId, "\"\"");   
+        completionHandler(messageId, webviewId, hostWebviewId, "\"\"");
     }
 
     - (void)addPreloadScriptToWebView:(const char*)jsString {
         if (!jsString) return;
-        
+
         std::string script(jsString);
         self.client->AddPreloadScript(script);
     }
@@ -6347,16 +6349,6 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
         if (self.focusHandler) {
             self.focusHandler(self.windowId);
         }
-
-        // Prefer WGPU input view as first responder so key events reach GPU windows.
-        NSWindow *window = [notification object];
-        ContainerView *containerView = [window contentView];
-        for (AbstractView *abstractView in containerView.abstractViews) {
-            if (abstractView.nsView && [abstractView.nsView isKindOfClass:[WGPUInputView class]]) {
-                [window makeFirstResponder:abstractView.nsView];
-                break;
-            }
-        }
     }
     - (void)windowDidResignKey:(NSNotification *)notification {
         if (self.blurHandler) {
@@ -6387,19 +6379,19 @@ extern "C" void startEventLoop(const char* identifier, const char* name, const c
         g_electrobunChannel = std::string(channel);
     }
 
-    useCEF = isCEFAvailable();    
-    
+    useCEF = isCEFAvailable();
+
     // Initialize the global AbstractView tracking map
     if (!globalAbstractViews) {
         globalAbstractViews = [[NSMutableDictionary alloc] init];
     }
-    
+
     // Initialize webview HTML content storage
     if (!webviewHTMLContent) {
         webviewHTMLContent = [[NSMutableDictionary alloc] init];
         webviewHTMLLock = [[NSLock alloc] init];
     }
-    
+
     // Set up dispatch sources for SIGINT and SIGTERM so they work regardless of
     // which event loop is running (CefRunMessageLoop or [NSApp run]).
     // bun's process.on("SIGINT") depends on bun's event loop to forward signals
@@ -6696,18 +6688,18 @@ extern "C" void loadHTMLInWebView(AbstractView *abstractView, const char *htmlSt
     [abstractView loadHTML:htmlString];
 }
 
-extern "C" void webviewGoBack(AbstractView *abstractView) {   
+extern "C" void webviewGoBack(AbstractView *abstractView) {
     if (!abstractView) {
         NSLog(@"webviewGoBack: abstractView is null");
         return;
     }
-    
+
     // Check if webview still exists in global tracking
     if (!globalAbstractViews[@(abstractView.webviewId)]) {
         NSLog(@"webviewGoBack: webview %u not in tracking, skipping", abstractView.webviewId);
         return;
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [abstractView goBack];
     });
@@ -6724,12 +6716,12 @@ extern "C" void wgpuViewSetFrame(AbstractView *abstractView, double x, double y,
     schedulePendingResizeDrain();
 }
 
-extern "C" void wgpuViewSetTransparent(AbstractView *abstractView, BOOL transparent) {    
+extern "C" void wgpuViewSetTransparent(AbstractView *abstractView, BOOL transparent) {
     if (!abstractView) return;
     [abstractView setTransparent:transparent];
 }
 
-extern "C" void wgpuViewSetPassthrough(AbstractView *abstractView, BOOL enablePassthrough) {    
+extern "C" void wgpuViewSetPassthrough(AbstractView *abstractView, BOOL enablePassthrough) {
     if (!abstractView) return;
     [abstractView setPassthrough:enablePassthrough];
 }
@@ -6762,13 +6754,13 @@ extern "C" void webviewGoForward(AbstractView *abstractView) {
         NSLog(@"webviewGoForward: abstractView is null");
         return;
     }
-    
+
     // Check if webview still exists in global tracking
     if (!globalAbstractViews[@(abstractView.webviewId)]) {
         NSLog(@"webviewGoForward: webview %u not in tracking, skipping", abstractView.webviewId);
         return;
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [abstractView goForward];
     });
@@ -6779,13 +6771,13 @@ extern "C" void webviewReload(AbstractView *abstractView) {
         NSLog(@"webviewReload: abstractView is null");
         return;
     }
-    
+
     // Check if webview still exists in global tracking
     if (!globalAbstractViews[@(abstractView.webviewId)]) {
         NSLog(@"webviewReload: webview %u not in tracking, skipping", abstractView.webviewId);
         return;
     }
-    
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [abstractView reload];
     });
@@ -6799,15 +6791,15 @@ extern "C" void webviewRemove(AbstractView *abstractView) {
     // Check global tracking map instead of individual flag
     NSNumber *webviewKey = @(abstractView.webviewId);
     AbstractView *trackedView = globalAbstractViews[webviewKey];
-    
+
     if (!trackedView) {
         return;
     }
-    
+
     if (trackedView != abstractView) {
         NSLog(@"webviewRemove: WARNING - tracked view %p != passed view %p for webviewId %u", trackedView, abstractView, abstractView.webviewId);
     }
-    
+
     // Remove from global tracking immediately to prevent re-entry
     [globalAbstractViews removeObjectForKey:webviewKey];
     [abstractView remove];
@@ -6818,13 +6810,13 @@ extern "C" BOOL webviewCanGoBack(AbstractView *abstractView) {
         NSLog(@"webviewCanGoBack: abstractView is null");
         return NO;
     }
-    
+
     // Check if webview still exists in global tracking
     if (!globalAbstractViews[@(abstractView.webviewId)]) {
         NSLog(@"webviewCanGoBack: webview %u not in tracking, returning NO", abstractView.webviewId);
         return NO;
     }
-    
+
     return [abstractView canGoBack];
 }
 
@@ -6833,30 +6825,30 @@ extern "C" BOOL webviewCanGoForward(AbstractView *abstractView) {
         NSLog(@"webviewCanGoForward: abstractView is null");
         return NO;
     }
-    
+
     // Check if webview still exists in global tracking
     if (!globalAbstractViews[@(abstractView.webviewId)]) {
         NSLog(@"webviewCanGoForward: webview %u not in tracking, returning NO", abstractView.webviewId);
         return NO;
     }
-    
+
     return [abstractView canGoForward];
 }
 
-extern "C" void evaluateJavaScriptWithNoCompletion(AbstractView *abstractView, const char *script) {                    
-    [abstractView evaluateJavaScriptWithNoCompletion:script];        
+extern "C" void evaluateJavaScriptWithNoCompletion(AbstractView *abstractView, const char *script) {
+    [abstractView evaluateJavaScriptWithNoCompletion:script];
 }
 
-extern "C" void testFFI(void *ptr) {              
+extern "C" void testFFI(void *ptr) {
     NSLog(@"ObjC side - raw ptr: %p", ptr);
-    
+
     // Dump memory contents
     uintptr_t *memory = (uintptr_t *)ptr;
     NSLog(@"Memory contents - first 4 words:");
     for(int i = 0; i < 4; i++) {
         NSLog(@"  Offset %d: %lx", i * 8, memory[i]);
     }
-    
+
     // Try to get object type information
     Class cls = object_getClass((__bridge id)ptr);
     if (cls) {
@@ -6864,7 +6856,7 @@ extern "C" void testFFI(void *ptr) {
     } else {
         NSLog(@"Not a valid Objective-C class pointer");
     }
-    
+
     // Try to check vtable if it's a C++ object
     void **vtable = *(void***)ptr;
     NSLog(@"Possible vtable pointer: %p", vtable);
@@ -6877,7 +6869,7 @@ extern "C" void callAsyncJavaScript(const char *messageId,
                                     uint32_t hostWebviewId,
                                     callAsyncJavascriptCompletionHandler completionHandler) {
 
-    
+
    [abstractView callAsyncJavascript:messageId
                         jsString:jsString
                        webviewId:webviewId
@@ -6885,8 +6877,8 @@ extern "C" void callAsyncJavaScript(const char *messageId,
                completionHandler:completionHandler];
 }
 
-extern "C" void addPreloadScriptToWebView(AbstractView *abstractView, const char *scriptContent, BOOL forMainFrameOnly) {                
-    [abstractView addPreloadScriptToWebView:scriptContent];    
+extern "C" void addPreloadScriptToWebView(AbstractView *abstractView, const char *scriptContent, BOOL forMainFrameOnly) {
+    [abstractView addPreloadScriptToWebView:scriptContent];
 }
 
 // todo: remove identifier and add option forMainFrameOnly
@@ -6894,7 +6886,7 @@ extern "C" void updatePreloadScriptToWebView(AbstractView *abstractView,
                                              const char *scriptIdentifier,
                                              const char *scriptContent,
                                              BOOL forMainFrameOnly) {
-    [abstractView updateCustomPreloadScript:scriptContent];    
+    [abstractView updateCustomPreloadScript:scriptContent];
 }
 
 extern "C" void invokeDecisionHandler(void (^decisionHandler)(WKNavigationActionPolicy), WKNavigationActionPolicy policy) {
@@ -6914,15 +6906,15 @@ extern "C" const char* getBodyFromScriptMessage(WKScriptMessage *message) {
     return body.UTF8String;
 }
 
-extern "C" void webviewSetTransparent(AbstractView *abstractView, BOOL transparent) {    
+extern "C" void webviewSetTransparent(AbstractView *abstractView, BOOL transparent) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [abstractView setTransparent:transparent];    
+        [abstractView setTransparent:transparent];
     });
 }
 
-extern "C" void webviewSetPassthrough(AbstractView *abstractView, BOOL enablePassthrough) {    
+extern "C" void webviewSetPassthrough(AbstractView *abstractView, BOOL enablePassthrough) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [abstractView setPassthrough:enablePassthrough];    
+        [abstractView setPassthrough:enablePassthrough];
     });
 }
 
@@ -7020,17 +7012,17 @@ NSWindow *createNSWindowWithFrameAndStyle(uint32_t windowId,
                                                      WindowFocusHandler zigFocusHandler,
                                                      WindowBlurHandler zigBlurHandler,
                                                      WindowKeyHandler zigKeyHandler) {
-    
+
     NSScreen *primaryScreen = [NSScreen screens][0];
     NSRect screenFrame = [primaryScreen frame];
     config.frame.origin.y = screenFrame.size.height - config.frame.origin.y;
-    
+
     NSWindow *window = [[ElectrobunWindow alloc] initWithContentRect:config.frame
                                                           styleMask:config.styleMask
                                                             backing:NSBackingStoreBuffered
                                                               defer:YES
                                                              screen:primaryScreen];
-    
+
     [window setFrameTopLeftPoint:config.frame.origin];
     if (strcmp(config.titleBarStyle, "hiddenInset") == 0) {
         window.titlebarAppearsTransparent = YES;
@@ -7055,7 +7047,7 @@ NSWindow *createNSWindowWithFrameAndStyle(uint32_t windowId,
     return window;
 
     // return (void*)window;
-    
+
 }
 
 extern "C" void testFFI2(void (*completionHandler)()) {
@@ -7136,12 +7128,12 @@ extern "C" void showWindow(NSWindow *window) {
     dispatch_sync(dispatch_get_main_queue(), ^{
         // First ensure the window is visible
         [window orderFront:nil];
-        
+
         // Make the window key and bring to front
         [window makeKeyAndOrderFront:nil];
-        
+
         // Activate the application to ensure it can receive focus
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];    
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     });
 }
 
@@ -7535,17 +7527,17 @@ extern "C" const char *openFileDialog(const char *startingFolder,
     __block NSOpenPanel *panel;
     __block NSInteger result = NSModalResponseCancel;
     __block NSString *concatenatedPaths = nil;
-    
-    dispatch_sync(dispatch_get_main_queue(), ^{        
-        panel = [NSOpenPanel openPanel];        
-        [panel setCanChooseFiles:canChooseFiles];        
-        [panel setCanChooseDirectories:canChooseDirectories];        
-        [panel setAllowsMultipleSelection:allowsMultipleSelection];        
+
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        panel = [NSOpenPanel openPanel];
+        [panel setCanChooseFiles:canChooseFiles];
+        [panel setCanChooseDirectories:canChooseDirectories];
+        [panel setAllowsMultipleSelection:allowsMultipleSelection];
 
         NSString *startFolder = [NSString stringWithUTF8String:startingFolder ?: ""];
-        [panel setDirectoryURL:[NSURL fileURLWithPath:startFolder]];        
-        
-        if (allowedFileTypes && strcmp(allowedFileTypes, "*") != 0 && strcmp(allowedFileTypes, "") != 0) {            
+        [panel setDirectoryURL:[NSURL fileURLWithPath:startFolder]];
+
+        if (allowedFileTypes && strcmp(allowedFileTypes, "*") != 0 && strcmp(allowedFileTypes, "") != 0) {
             NSString *allowedTypesStr = [NSString stringWithUTF8String:allowedFileTypes];
             NSArray *fileTypesArray = [allowedTypesStr componentsSeparatedByString:@","];
             #pragma clang diagnostic push
@@ -7553,19 +7545,19 @@ extern "C" const char *openFileDialog(const char *startingFolder,
             [panel setAllowedFileTypes:fileTypesArray];
             #pragma clang diagnostic pop
         }
-                
-        result = [panel runModal]; // Run the modal dialog on the main thread        
-        
-        if (result == NSModalResponseOK) {            
+
+        result = [panel runModal]; // Run the modal dialog on the main thread
+
+        if (result == NSModalResponseOK) {
             NSArray<NSURL *> *selectedFileURLs = [panel URLs];
             NSMutableArray<NSString *> *pathStrings = [NSMutableArray array];
             for (NSURL *u in selectedFileURLs) {
                 [pathStrings addObject:u.path];
             }
             concatenatedPaths = [pathStrings componentsJoinedByString:@","];
-        }        
+        }
     });
-    
+
     // Return the result after the dispatch_sync completes
     return (concatenatedPaths) ? strdup([concatenatedPaths UTF8String]) : NULL;
 }
@@ -7816,41 +7808,41 @@ extern "C" bool isDockIconVisible() {
 
 extern "C" NSStatusItem* createTray(uint32_t trayId, const char *title, const char *pathToImage, bool isTemplate,
                                     uint32_t width, uint32_t height, ZigStatusItemHandler zigTrayItemHandler) {
-    
+
     __block NSStatusItem* trayPtr;
-    
+
     dispatch_sync(dispatch_get_main_queue(), ^{
-        NSString *pathToImageString = [NSString stringWithUTF8String:pathToImage ?: ""];    
-        NSString *titleString = [NSString stringWithUTF8String:title ?: ""];    
+        NSString *pathToImageString = [NSString stringWithUTF8String:pathToImage ?: ""];
+        NSString *titleString = [NSString stringWithUTF8String:title ?: ""];
         NSStatusItem *statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
         if (pathToImageString.length > 0) {
             statusItem.button.image = [[NSImage alloc] initWithContentsOfFile:pathToImageString];
             [statusItem.button.image setTemplate:isTemplate];
             statusItem.button.image.size = NSMakeSize(width, height);
-        }    
+        }
 
         if (titleString.length > 0) {
             statusItem.button.title = titleString;
-        }    
+        }
 
         if (zigTrayItemHandler) {
             StatusItemTarget *target = [[StatusItemTarget alloc] init];
             target.statusItem = statusItem;
             target.zigHandler = zigTrayItemHandler;
-            target.trayId = trayId;        
+            target.trayId = trayId;
             objc_setAssociatedObject(statusItem.button, "statusItemTarget", target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             [statusItem.button setTarget:target];
             [statusItem.button setAction:@selector(statusItemClicked:)];
             [statusItem.button sendActionOn:(NSEventMaskLeftMouseUp | NSEventMaskRightMouseUp)];
         }
 
-        retainObjCObject(statusItem);    
+        retainObjCObject(statusItem);
 
         trayPtr = statusItem;
     });
 
     return trayPtr;
-    
+
 }
 
 extern "C" void setTrayTitle(NSStatusItem *statusItem, const char *title) {
@@ -8009,14 +8001,14 @@ extern "C" void getWebviewSnapshot(uint32_t hostId, uint32_t webviewId,
 }
 
 
-extern "C" void setJSUtils(GetMimeType getMimeType, GetHTMLForWebviewSync getHTMLForWebviewSync) {    
+extern "C" void setJSUtils(GetMimeType getMimeType, GetHTMLForWebviewSync getHTMLForWebviewSync) {
     // NO-OP: jsUtils callbacks are deprecated, now using map-based approach
     // The function is kept for compatibility but does nothing
-    
+
     // create a dispatch queue on the current thread (worker thread) that
     // can later be called from main
     dispatch_queue_attr_t attr = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_DEFAULT, 0);
-    jsWorkerQueue = dispatch_queue_create("com.electrobun.jsworker", attr);    
+    jsWorkerQueue = dispatch_queue_create("com.electrobun.jsworker", attr);
 
 }
 
@@ -8027,7 +8019,7 @@ extern "C" void setWebviewHTMLContent(uint32_t webviewId, const char* htmlConten
         NSLog(@"ERROR: setWebviewHTMLContent called before initialization");
         return;
     }
-    
+
     [webviewHTMLLock lock];
     NSNumber *key = @(webviewId);
     if (htmlContent) {

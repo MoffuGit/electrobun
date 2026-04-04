@@ -2009,6 +2009,19 @@ async function buildNative() {
 async function buildLauncher() {
 	console.log(`Building launcher for ${OS} ${ARCH}...`);
 
+	if (OS === "macos") {
+		// `zig build` currently fails on macOS 26.x while compiling the host-side
+		// build runner, even for tiny `linkLibC()` executables. Build the launcher
+		// directly so local Electrobun development still works on current Xcode SDKs.
+		const target = ARCH === "arm64" ? "aarch64-macos" : "x86_64-macos";
+		const optimize = CHANNEL === "debug" ? "Debug" : "ReleaseSmall";
+		const cpuArgs = ARCH === "x64" ? ["-mcpu=baseline"] : [];
+
+		await $`mkdir -p src/launcher/zig-out/bin`;
+		await $`cd src/launcher && ../../vendors/zig/zig build-exe main.zig -lc -target ${target} -O ${optimize} ${cpuArgs} -femit-bin=zig-out/bin/launcher${binExt}`;
+		return;
+	}
+
 	let zigArgs: string[] = [];
 
 	if (OS === "win") {
@@ -2058,6 +2071,16 @@ async function buildMainJs() {
 }
 
 async function buildSelfExtractor() {
+	if (OS === "macos") {
+		const target = ARCH === "arm64" ? "aarch64-macos" : "x86_64-macos";
+		const optimize = CHANNEL === "debug" ? "Debug" : "ReleaseSmall";
+		const cpuArgs = ARCH === "x64" ? ["-mcpu=baseline"] : [];
+
+		await $`mkdir -p src/extractor/zig-out/bin`;
+		await $`cd src/extractor && ../../vendors/zig/zig build-exe main.zig -lc -target ${target} -O ${optimize} ${cpuArgs} -femit-bin=zig-out/bin/extractor${binExt}`;
+		return;
+	}
+
 	const zigArgs =
 		OS === "win"
 			? ["-Dtarget=x86_64-windows", "-Dcpu=baseline"]
