@@ -1238,29 +1238,24 @@ NSArray<NSValue *> *addOverlapRects(NSArray<NSDictionary *> *rectsArray, CGFloat
             return;
         }
 
-        NSRect alignedFrame = NSIntegralRectWithOptions(
-            NSMakeRect(
-                frame.origin.x,
-                subview.superview.bounds.size.height - frame.origin.y - frame.size.height,
-                frame.size.width,
-                frame.size.height
-            ),
-            NSAlignAllEdgesNearest
-        );
+        CGFloat adjustedX = floor(frame.origin.x);
+        CGFloat adjustedWidth = ceilf(frame.size.width);
+        CGFloat adjustedHeight = ceilf(frame.size.height);
+        CGFloat adjustedY = floor(subview.superview.bounds.size.height - ceilf(frame.origin.y) - adjustedHeight);
 
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
 
         if (self.mirrorModeEnabled) {
-            subview.frame = NSMakeRect(OFFSCREEN_OFFSET, OFFSCREEN_OFFSET, alignedFrame.size.width, alignedFrame.size.height);
-            subview.layer.position = alignedFrame.origin;
+            subview.frame = NSMakeRect(OFFSCREEN_OFFSET, OFFSCREEN_OFFSET, adjustedWidth, adjustedHeight);
+            subview.layer.position = CGPointMake(adjustedX, adjustedY);
         } else {
-            subview.frame = alignedFrame;
+            subview.frame = NSMakeRect(adjustedX, adjustedY, adjustedWidth, adjustedHeight);
         }
 
         CAShapeLayer *maskLayer = nil;
         if (parsedMasks && parsedMasks.count > 0) {
-            CGFloat heightToAdjust = self.nsView.layer.geometryFlipped ? 0 : alignedFrame.size.height;
+            CGFloat heightToAdjust = self.nsView.layer.geometryFlipped ? 0 : adjustedHeight;
             NSArray<NSValue *> *processedRects = addOverlapRects(parsedMasks, heightToAdjust);
 
             maskLayer = [CAShapeLayer layer];
@@ -3044,37 +3039,16 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             dispatch_async(dispatch_get_main_queue(), ^{
                 id<MTLDevice> device = MTLCreateSystemDefaultDevice();
                 NSView *view = [[WGPUInputView alloc] initWithFrame:frame];
-                NSRect alignedFrame = NSIntegralRectWithOptions(
-                    NSMakeRect(
-                        frame.origin.x,
-                        window.contentView.bounds.size.height - frame.origin.y - frame.size.height,
-                        frame.size.width,
-                        frame.size.height
-                    ),
-                    NSAlignAllEdgesNearest
-                );
-
+                view.layer.backgroundColor = [[NSColor clearColor] CGColor];
 
                 CAMetalLayer *metalLayer = [CAMetalLayer layer];
                 metalLayer.device = device;
-                metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-                metalLayer.framebufferOnly = NO;
-                metalLayer.opaque = NO;
-                metalLayer.backgroundColor = [[NSColor clearColor] CGColor];
-                metalLayer.presentsWithTransaction = YES;
-                metalLayer.allowsNextDrawableTimeout = NO;
-                CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-                metalLayer.colorspace = cs;
-                CGColorSpaceRelease(cs);
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
-                metalLayer.drawableSize = CGSizeMake(alignedFrame.size.width * scale, alignedFrame.size.height * scale);
-                metalLayer.needsDisplayOnBoundsChange = YES;
-
+                metalLayer.drawableSize = CGSizeMake(frame.size.width * scale, frame.size.height * scale);
                 view.layer = metalLayer;
 
                 view.wantsLayer = YES;
-
                 view.clipsToBounds = YES;
 
                 if (wgpuDebugEnabled()) {
@@ -3092,7 +3066,8 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 }
 
                 [window.contentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
-                view.frame = alignedFrame;
+                CGFloat adjustedY = window.contentView.bounds.size.height - frame.origin.y - frame.size.height;
+                view.frame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
 
                 if (self.pendingStartTransparent) {
                     window.opaque = NO;
