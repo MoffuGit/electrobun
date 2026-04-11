@@ -1238,24 +1238,29 @@ NSArray<NSValue *> *addOverlapRects(NSArray<NSDictionary *> *rectsArray, CGFloat
             return;
         }
 
-        CGFloat adjustedX = floor(frame.origin.x);
-        CGFloat adjustedWidth = ceilf(frame.size.width);
-        CGFloat adjustedHeight = ceilf(frame.size.height);
-        CGFloat adjustedY = floor(subview.superview.bounds.size.height - ceilf(frame.origin.y) - adjustedHeight);
+        NSRect alignedFrame = NSIntegralRectWithOptions(
+            NSMakeRect(
+                frame.origin.x,
+                subview.superview.bounds.size.height - frame.origin.y - frame.size.height,
+                frame.size.width,
+                frame.size.height
+            ),
+            NSAlignAllEdgesNearest
+        );
 
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
 
         if (self.mirrorModeEnabled) {
-            subview.frame = NSMakeRect(OFFSCREEN_OFFSET, OFFSCREEN_OFFSET, adjustedWidth, adjustedHeight);
-            subview.layer.position = CGPointMake(adjustedX, adjustedY);
+            subview.frame = NSMakeRect(OFFSCREEN_OFFSET, OFFSCREEN_OFFSET, alignedFrame.size.width, alignedFrame.size.height);
+            subview.layer.position = alignedFrame.origin;
         } else {
-            subview.frame = NSMakeRect(adjustedX, adjustedY, adjustedWidth, adjustedHeight);
+            subview.frame = alignedFrame;
         }
 
         CAShapeLayer *maskLayer = nil;
         if (parsedMasks && parsedMasks.count > 0) {
-            CGFloat heightToAdjust = self.nsView.layer.geometryFlipped ? 0 : adjustedHeight;
+            CGFloat heightToAdjust = self.nsView.layer.geometryFlipped ? 0 : alignedFrame.size.height;
             NSArray<NSValue *> *processedRects = addOverlapRects(parsedMasks, heightToAdjust);
 
             maskLayer = [CAShapeLayer layer];
@@ -3039,8 +3044,16 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             dispatch_async(dispatch_get_main_queue(), ^{
                 id<MTLDevice> device = MTLCreateSystemDefaultDevice();
                 NSView *view = [[WGPUInputView alloc] initWithFrame:frame];
-                view.wantsLayer = YES;
-                view.layer.backgroundColor = [[NSColor clearColor] CGColor];
+                NSRect alignedFrame = NSIntegralRectWithOptions(
+                    NSMakeRect(
+                        frame.origin.x,
+                        window.contentView.bounds.size.height - frame.origin.y - frame.size.height,
+                        frame.size.width,
+                        frame.size.height
+                    ),
+                    NSAlignAllEdgesNearest
+                );
+
 
                 CAMetalLayer *metalLayer = [CAMetalLayer layer];
                 metalLayer.device = device;
@@ -3055,8 +3068,14 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 CGColorSpaceRelease(cs);
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
-                metalLayer.drawableSize = CGSizeMake(frame.size.width * scale, frame.size.height * scale);
+                metalLayer.drawableSize = CGSizeMake(alignedFrame.size.width * scale, alignedFrame.size.height * scale);
+                metalLayer.needsDisplayOnBoundsChange = YES;
+
                 view.layer = metalLayer;
+
+                view.wantsLayer = YES;
+
+                view.clipsToBounds = YES;
 
                 if (wgpuDebugEnabled()) {
                     NSLog(@"WGPUViewImpl init: frame=%.1fx%.1f scale=%.2f drawable=%.1fx%.1f",
@@ -3073,8 +3092,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 }
 
                 [window.contentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
-                CGFloat adjustedY = window.contentView.bounds.size.height - frame.origin.y - frame.size.height;
-                view.frame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
+                view.frame = alignedFrame;
 
                 if (self.pendingStartTransparent) {
                     window.opaque = NO;
