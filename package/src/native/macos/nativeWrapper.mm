@@ -1274,18 +1274,6 @@ NSArray<NSValue *> *addOverlapRects(NSArray<NSDictionary *> *rectsArray, CGFloat
 
         [CATransaction commit];
 
-        if (self.nsView && [self.nsView.layer isKindOfClass:[CAMetalLayer class]]) {
-            CAMetalLayer *layer = (CAMetalLayer *)self.nsView.layer;
-            CGFloat scale = self.nsView.window.backingScaleFactor;
-            layer.contentsScale = scale;
-            CGSize size = self.nsView.bounds.size;
-            layer.drawableSize = CGSizeMake(size.width * scale, size.height * scale);
-            if (wgpuDebugEnabled()) {
-                NSLog(@"WGPUView resize: bounds=%.1fx%.1f scale=%.2f drawable=%.1fx%.1f",
-                      size.width, size.height, scale, layer.drawableSize.width, layer.drawableSize.height);
-            }
-        }
-
         NSPoint currentMousePosition = [self.nsView.window mouseLocationOutsideOfEventStream];
         ContainerView *containerView = (ContainerView *)self.nsView.superview;
         [containerView updateActiveWebviewForMousePosition:currentMousePosition];
@@ -3037,12 +3025,10 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             self.webviewId = webviewId;
 
             dispatch_async(dispatch_get_main_queue(), ^{
-                id<MTLDevice> device = MTLCreateSystemDefaultDevice();
                 NSView *view = [[WGPUInputView alloc] initWithFrame:frame];
                 view.layer.backgroundColor = [[NSColor clearColor] CGColor];
 
                 CAMetalLayer *metalLayer = [CAMetalLayer layer];
-                metalLayer.device = device;
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
                 metalLayer.drawableSize = CGSizeMake(frame.size.width * scale, frame.size.height * scale);
