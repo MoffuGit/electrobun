@@ -3014,6 +3014,77 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
     }
 @end
 
+typedef void (*IOSurfaceLayerDisplayCallback)(void *displayContext);
+typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
+
+@interface IOSurfaceLayer: CAMetalLayer  {
+    void *_display_ctx;
+    IOSurfaceLayerDisplayCallback _display_cb;
+    BOOL _displaying;
+    void *_resize_ctx;
+    IOSurfaceLayerResizeCallback _resize_cb;
+}
+
+- (void)setDisplayCallback:(IOSurfaceLayerDisplayCallback)displayCallback context:(void *)displayContext;
+- (void)setResizeCallback:(IOSurfaceLayerResizeCallback)resizeCallback context:(void *)resizeContext;
+@end
+
+@implementation IOSurfaceLayer
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _display_ctx = NULL;
+        _display_cb  = NULL;
+        _displaying  = NO;
+        _resize_ctx  = NULL;
+        _resize_cb   = NULL;
+    }
+    return self;
+}
+
+- (id<CAAction>)actionForKey:(NSString *)event {
+    (void)event;
+    return (id<CAAction>)[NSNull null];
+}
+
+- (void)setDisplayCallback:(IOSurfaceLayerDisplayCallback)displayCallback context:(void *)displayContext {
+    _display_cb = displayCallback;
+    _display_ctx = displayContext;
+}
+
+- (void)setResizeCallback:(IOSurfaceLayerResizeCallback)resizeCallback context:(void *)resizeContext {
+    _resize_cb = resizeCallback;
+    _resize_ctx = resizeContext;
+}
+
+- (void)setBounds:(CGRect)bounds {
+    CGRect oldBounds = self.bounds;
+    [super setBounds:bounds];
+
+    if (CGSizeEqualToSize(oldBounds.size, bounds.size)) {
+        return;
+    }
+
+    IOSurfaceLayerResizeCallback resizeCallback = _resize_cb;
+    if (resizeCallback) {
+        resizeCallback(_resize_ctx);
+    }
+}
+
+- (void)display {
+    if (_displaying) {
+        return;
+    }
+
+    IOSurfaceLayerDisplayCallback displayCallback = _display_cb;
+    if (displayCallback) {
+        _displaying = YES;
+        displayCallback(_display_ctx);
+        _displaying = NO;
+    }
+}
+@end
+
 @implementation WGPUViewImpl
 
     - (instancetype)initWithWebviewId:(uint32_t)webviewId
@@ -3028,20 +3099,15 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 NSView *view = [[WGPUInputView alloc] initWithFrame:frame];
                 view.layer.backgroundColor = [[NSColor clearColor] CGColor];
 
-                CAMetalLayer *metalLayer = [CAMetalLayer layer];
+                IOSurfaceLayer *metalLayer = [IOSurfaceLayer layer];
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
-                metalLayer.drawableSize = CGSizeMake(frame.size.width * scale, frame.size.height * scale);
+                metalLayer.needsDisplayOnBoundsChange = YES;
+                metalLayer.contentsGravity = kCAGravityBottomRight;
                 view.layer = metalLayer;
 
                 view.wantsLayer = YES;
                 view.clipsToBounds = YES;
-
-                if (wgpuDebugEnabled()) {
-                    NSLog(@"WGPUViewImpl init: frame=%.1fx%.1f scale=%.2f drawable=%.1fx%.1f",
-                          frame.size.width, frame.size.height, scale,
-                          metalLayer.drawableSize.width, metalLayer.drawableSize.height);
-                }
 
                 view.autoresizingMask = NSViewNotSizable;
 
