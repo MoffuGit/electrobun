@@ -134,8 +134,8 @@ export class ElectrobunWgpuTag extends HTMLElement {
 				});
 			},
 			getMasks,
-            burstIntervalMs: 50,
-			baseIntervalMs: 50,
+            burstIntervalMs: 1,
+			baseIntervalMs: 1,
 			burstDurationMs: 100,
 		});
 		this._sync.setLastRect(initialRect);

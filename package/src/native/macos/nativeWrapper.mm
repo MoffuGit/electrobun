@@ -3017,7 +3017,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
 typedef void (*IOSurfaceLayerDisplayCallback)(void *displayContext);
 typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
 
-@interface IOSurfaceLayer: CAMetalLayer  {
+@interface IOSurfaceLayer: CALayer  {
     void *_display_ctx;
     IOSurfaceLayerDisplayCallback _display_cb;
     BOOL _displaying;
@@ -3103,7 +3103,7 @@ typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
                 metalLayer.needsDisplayOnBoundsChange = YES;
-                metalLayer.contentsGravity = kCAGravityBottomRight;
+                metalLayer.contentsGravity = kCAGravityTopLeft;
                 view.layer = metalLayer;
 
                 view.wantsLayer = YES;
@@ -6887,7 +6887,7 @@ extern "C" void* wgpuViewGetNativeHandle(AbstractView *abstractView) {
     dispatch_sync(dispatch_get_main_queue(), ^{
         if (!abstractView.nsView) return;
         CALayer *layer = abstractView.nsView.layer;
-        if ([layer isKindOfClass:[CAMetalLayer class]]) {
+        if (layer) {
             result = (__bridge void*)layer;
         }
     });
