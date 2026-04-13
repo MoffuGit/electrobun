@@ -3035,7 +3035,6 @@ typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
     if (self) {
         _display_ctx = NULL;
         _display_cb  = NULL;
-        _displaying  = NO;
         _resize_ctx  = NULL;
         _resize_cb   = NULL;
     }
@@ -3072,15 +3071,9 @@ typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
 }
 
 - (void)display {
-    if (_displaying) {
-        return;
-    }
-
     IOSurfaceLayerDisplayCallback displayCallback = _display_cb;
     if (displayCallback) {
-        _displaying = YES;
         displayCallback(_display_ctx);
-        _displaying = NO;
     }
 }
 @end
