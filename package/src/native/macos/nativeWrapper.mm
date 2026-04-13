@@ -3156,6 +3156,37 @@ typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
     - (void)closeDevTools {}
     - (void)toggleDevTools {}
 
+    - (void)setHidden:(BOOL)hidden {
+        if (!self.nsView) return;
+
+        void (^applyHiddenState)(void) = ^{
+            CALayer *layer = self.nsView.layer;
+
+            [CATransaction begin];
+            [CATransaction setDisableActions:YES];
+
+            [self.nsView setHidden:hidden];
+
+            if (layer) {
+                layer.hidden = hidden;
+                if (hidden) {
+                    // Clear the last IOSurface-backed frame so the layer stops showing stale contents.
+                    layer.contents = nil;
+                } else {
+                    [layer setNeedsDisplay];
+                }
+            }
+
+            [CATransaction commit];
+        };
+
+        if ([NSThread isMainThread]) {
+            applyHiddenState();
+        } else {
+            dispatch_async(dispatch_get_main_queue(), applyHiddenState);
+        }
+    }
+
     - (void)setTransparent:(BOOL)transparent {
         if (!self.nsView) return;
         dispatch_async(dispatch_get_main_queue(), ^{
