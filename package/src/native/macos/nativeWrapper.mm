@@ -845,9 +845,6 @@ static NSMutableDictionary<NSNumber *, AbstractView *> *globalAbstractViews = ni
 @end
 
 // ----------------------- Webview Implementations -----------------------
-@interface ElectrobunWKWebView : WKWebView
-@end
-
 @interface WKWebViewImpl : AbstractView
     @property (nonatomic, strong) WKWebView *webView;
 
@@ -2396,45 +2393,6 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
 
 // ----------------------- WKWebViewImpl -----------------------
 
-@implementation ElectrobunWKWebView
-
-    - (uint32_t)modifierMaskFromEvent:(NSEvent*)event {
-        uint32_t mods = 0;
-        if ([event modifierFlags] & NSEventModifierFlagShift) mods |= 1 << 0;
-        if ([event modifierFlags] & NSEventModifierFlagControl) mods |= 1 << 1;
-        if ([event modifierFlags] & NSEventModifierFlagOption) mods |= 1 << 2;
-        if ([event modifierFlags] & NSEventModifierFlagCommand) mods |= 1 << 3;
-        return mods;
-    }
-
-    - (BOOL)shouldConsumeKeyEvent:(NSEvent*)event isDown:(uint32_t)isDown {
-        WindowDelegate *delegate = (WindowDelegate *)self.window.delegate;
-        if (!delegate || !delegate.keyHandler) return NO;
-
-        uint32_t shouldConsume = delegate.keyHandler(delegate.windowId,
-                                                     (uint32_t)[event keyCode],
-                                                     [self modifierMaskFromEvent:event],
-                                                     isDown,
-                                                     isDown ? ([event isARepeat] ? 1 : 0) : 0);
-        return shouldConsume != 0;
-    }
-
-    - (void)keyDown:(NSEvent*)event {
-        if ([self shouldConsumeKeyEvent:event isDown:1]) {
-            return;
-        }
-        [super keyDown:event];
-    }
-
-    - (void)keyUp:(NSEvent*)event {
-        if ([self shouldConsumeKeyEvent:event isDown:0]) {
-            return;
-        }
-        [super keyUp:event];
-    }
-
-@end
-
 
 @implementation WKWebViewImpl
 
@@ -2485,7 +2443,7 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 [configuration setURLSchemeHandler:assetSchemeHandler forURLScheme:@"views"];
 
                 // create WKWebView
-                self.webView = [[ElectrobunWKWebView alloc] initWithFrame:frame configuration:configuration];
+                self.webView = [[WKWebView alloc] initWithFrame:frame configuration:configuration];
 
                 // Only set transparent background for main window webviews (autoResize/fullscreen)
                 // Child webviews (OOPIFs) need a visible background to render properly

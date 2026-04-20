@@ -2,7 +2,6 @@ export default class ElectrobunEvent<DataType, ResponseType> {
 	// todo (yoav): make most of these readonly except for response
 	name: string;
 	data: DataType;
-	defaultPrevented: boolean = false;
 	// todo (yoav): define getters and setters for response
 	_response: ResponseType | undefined;
 	responseWasSet: boolean = false;
@@ -26,9 +25,5 @@ export default class ElectrobunEvent<DataType, ResponseType> {
 	clearResponse() {
 		this._response = undefined;
 		this.responseWasSet = false;
-	}
-
-	preventDefault() {
-		this.defaultPrevented = true;
 	}
 }

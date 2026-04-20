@@ -1895,11 +1895,10 @@ const windowKeyCallback = new JSCallback(
 		});
 		electrobunEventEmitter.emitEvent(event);
 		electrobunEventEmitter.emitEvent(event, id);
-		return event.defaultPrevented ? 1 : 0;
 	},
 	{
 		args: ["u32", "u32", "u32", "u32", "u32"],
-		returns: "u32",
+		returns: "void",
 		threadsafe: true,
 	},
 );
