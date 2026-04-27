@@ -7162,24 +7162,23 @@ typedef bool (*KeyHandlerCallback)(void *keyHandlerContext, uint32_t, uint32_t, 
     return false;
 }
 
-- (void)keyDown:(NSEvent*)event {
-    if ([self shouldConsumeKeyEvent:event isDown:YES]) {
+- (void)sendEvent:(NSEvent *)event {
+    if (event.type == NSEventTypeKeyDown && [self shouldConsumeKeyEvent:event isDown:YES]) {
         return;
     }
-    [super keyDown:event];
+    [super sendEvent:event];
+}
+
+//HACK:
+//THis fix my issue but i dont what's the general effect
+//of doing this, i only know that fix my issue
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+        return YES; // stop propagation to menu system
 }
 
 - (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext {
     _key_handler_cb = keyHandlerCallback;
     _key_handler_ctx = keyHandlerContext;
-}
-
-
-- (void)keyUp:(NSEvent*)event {
-    if ([self shouldConsumeKeyEvent:event isDown:NO]) {
-        return;
-    }
-    [super keyUp:event];
 }
 @end
 
