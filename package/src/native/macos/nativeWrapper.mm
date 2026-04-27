@@ -4,7 +4,9 @@
  * =============================================================================
  */
 
+#include <AppKit/AppKit.h>
 #import <WebKit/WebKit.h>
+#include <cstdio>
 #import <objc/runtime.h>
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
@@ -7167,6 +7169,13 @@ typedef bool (*KeyHandlerCallback)(void *keyHandlerContext, uint32_t, uint32_t, 
         return;
     }
     [super sendEvent:event];
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    if (event.type == NSEventTypeKeyDown && [self shouldConsumeKeyEvent:event isDown:YES]) {
+        return YES;
+    }
+    return [super performKeyEquivalent:event];
 }
 
 - (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext {
