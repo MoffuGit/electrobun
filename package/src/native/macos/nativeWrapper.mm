@@ -7169,13 +7169,6 @@ typedef bool (*KeyHandlerCallback)(void *keyHandlerContext, uint32_t, uint32_t, 
     [super sendEvent:event];
 }
 
-//HACK:
-//THis fix my issue but i dont what's the general effect
-//of doing this, i only know that fix my issue
-- (BOOL)performKeyEquivalent:(NSEvent *)event {
-        return YES; // stop propagation to menu system
-}
-
 - (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext {
     _key_handler_cb = keyHandlerCallback;
     _key_handler_ctx = keyHandlerContext;
