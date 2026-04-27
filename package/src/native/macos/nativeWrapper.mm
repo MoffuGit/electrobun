@@ -7122,13 +7122,65 @@ extern "C" NSRect createNSRectWrapper(double x, double y, double width, double h
     return NSMakeRect(x, y, width, height);
 }
 
+typedef bool (*KeyHandlerCallback)(void *keyHandlerContext, uint32_t, uint32_t, bool, bool);
 
-@interface ElectrobunWindow : NSWindow
+@interface ElectrobunWindow : NSWindow {
+    void *_key_handler_ctx;
+    KeyHandlerCallback _key_handler_cb;
+}
+    - (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext;
 @end
 
 @implementation ElectrobunWindow
 - (BOOL)canBecomeKeyWindow { return YES; }
 - (BOOL)canBecomeMainWindow { return YES; }
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _key_handler_ctx = NULL;
+        _key_handler_cb  = NULL;
+    }
+    return self;
+}
+
+- (uint32_t)modifierMaskFromEvent:(NSEvent*)event {
+    uint32_t mods = 0;
+    if ([event modifierFlags] & NSEventModifierFlagShift) mods |= 1 << 0;
+    if ([event modifierFlags] & NSEventModifierFlagControl) mods |= 1 << 1;
+    if ([event modifierFlags] & NSEventModifierFlagOption) mods |= 1 << 2;
+    if ([event modifierFlags] & NSEventModifierFlagCommand) mods |= 1 << 3;
+    return mods;
+}
+
+- (BOOL)shouldConsumeKeyEvent:(NSEvent*)event isDown:(bool)isDown {
+    KeyHandlerCallback keyHandlerCallback = _key_handler_cb;
+
+    if (keyHandlerCallback) {
+        return keyHandlerCallback(_key_handler_ctx, (uint32_t)[event keyCode], [self modifierMaskFromEvent:event], isDown, [event isARepeat]);
+    }
+
+    return false;
+}
+
+- (void)keyDown:(NSEvent*)event {
+    if ([self shouldConsumeKeyEvent:event isDown:YES]) {
+        return;
+    }
+    [super keyDown:event];
+}
+
+- (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext {
+    _key_handler_cb = keyHandlerCallback;
+    _key_handler_ctx = keyHandlerContext;
+}
+
+
+- (void)keyUp:(NSEvent*)event {
+    if ([self shouldConsumeKeyEvent:event isDown:NO]) {
+        return;
+    }
+    [super keyUp:event];
+}
 @end
 
 NSWindow *createNSWindowWithFrameAndStyle(uint32_t windowId,
