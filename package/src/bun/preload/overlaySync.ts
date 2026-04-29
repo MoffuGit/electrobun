@@ -21,6 +21,7 @@ export class OverlaySyncController {
 	private element: HTMLElement;
 	private options: Required<OverlaySyncOptions>;
 	private lastRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
+	private lastMasksJson = "";
 	private resizeObserver: ResizeObserver | null = null;
 	private positionLoop: ReturnType<typeof setTimeout> | null = null;
 	private resizeHandler: (() => void) | null = null;
@@ -88,20 +89,24 @@ export class OverlaySyncController {
 			return;
 		}
 
+		const masks = this.options.getMasks();
+		const masksJson = JSON.stringify(masks);
+
 		if (
 			!force &&
 			newRect.x === this.lastRect.x &&
 			newRect.y === this.lastRect.y &&
 			newRect.width === this.lastRect.width &&
-			newRect.height === this.lastRect.height
+			newRect.height === this.lastRect.height &&
+			masksJson === this.lastMasksJson
 		) {
 			return;
 		}
 
 		this.burstUntil = performance.now() + this.options.burstDurationMs;
 		this.lastRect = newRect;
+		this.lastMasksJson = masksJson;
 
-		const masks = this.options.getMasks();
-		this.options.onSync(newRect, JSON.stringify(masks));
+		this.options.onSync(newRect, masksJson);
 	}
 }
