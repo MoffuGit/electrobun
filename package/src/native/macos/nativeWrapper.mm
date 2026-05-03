@@ -2525,12 +2525,14 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                 self.webView.wantsLayer = YES;
                 self.webView.hidden = NO;
 
-                // For child webviews (non-autoResize), ensure they appear on top
+                // Force webviews to always render above GPU surfaces regardless of insertion order.
+                self.webView.layer.zPosition = 1000;
+
+                // For child webviews (non-autoResize), ensure they appear on top of sibling webviews
                 if (!autoResize) {
                     // Bring child webview to front of the view hierarchy
                     [self.webView removeFromSuperview];
                     [window.contentView addSubview:self.webView positioned:NSWindowAbove relativeTo:nil];
-                    self.webView.layer.zPosition = 1000;
                 }
 
                 ContainerView *containerView = (ContainerView *)window.contentView;
@@ -3070,7 +3072,9 @@ typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
                     self.fullSize = NO;
                 }
 
-                [window.contentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
+                [window.contentView addSubview:view positioned:NSWindowBelow relativeTo:nil];
+                // Force GPU surfaces to always render below webviews regardless of insertion order.
+                view.layer.zPosition = -1000;
                 CGFloat adjustedY = window.contentView.bounds.size.height - frame.origin.y - frame.size.height;
                 view.frame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
 
@@ -5962,6 +5966,9 @@ CefRefPtr<CefRequestContext> CreateRequestContextForPartition(const char* partit
                     NSRect osrFrame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
                     self.osrView = [[CEFOSRView alloc] initWithFrame:osrFrame];
                     [contentView addSubview:self.osrView];
+                    // Force CEF OSR webview to render above GPU surfaces.
+                    self.osrView.wantsLayer = YES;
+                    self.osrView.layer.zPosition = 1000;
                     self.nsView = self.osrView;
 
                     // Use windowless (off-screen) rendering for transparency
