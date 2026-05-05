@@ -2044,10 +2044,12 @@ async function buildLauncher() {
 		}
 	}
 
+	const zigEnv = zigBuildEnv();
+
 	if (CHANNEL === "debug") {
-		await $`cd src/launcher && ../../vendors/zig/zig build ${zigArgs}`;
+		await $`cd src/launcher && ../../vendors/zig/zig build ${zigArgs}`.env(zigEnv);
 	} else if (CHANNEL === "release") {
-		await $`cd src/launcher && ../../vendors/zig/zig build -Doptimize=ReleaseSmall ${zigArgs}`;
+		await $`cd src/launcher && ../../vendors/zig/zig build -Doptimize=ReleaseSmall ${zigArgs}`.env(zigEnv);
 	}
 }
 
@@ -2081,11 +2083,28 @@ async function buildSelfExtractor() {
 				? ["-Dcpu=baseline"]
 				: [];
 
+	const zigEnv = zigBuildEnv();
+
 	if (CHANNEL === "debug") {
-		await $`cd src/extractor && ../../vendors/zig/zig build ${zigArgs}`;
+		await $`cd src/extractor && ../../vendors/zig/zig build ${zigArgs}`.env(zigEnv);
 	} else if (CHANNEL === "release") {
-		await $`cd src/extractor && ../../vendors/zig/zig build -Doptimize=ReleaseSmall ${zigArgs}`;
+		await $`cd src/extractor && ../../vendors/zig/zig build -Doptimize=ReleaseSmall ${zigArgs}`.env(zigEnv);
 	}
+}
+
+// Workaround for macOS 26 SDK which only ships arm64e-macos in libSystem.tbd,
+// breaking Zig (which targets arm64-macos). Point Zig at our bundled libc stubs
+// (which include arm64-macos) via SDKROOT for darwin builds only.
+function zigBuildEnv(): Record<string, string> {
+	const env: Record<string, string> = { ...process.env } as Record<string, string>;
+	if (OS === "macos") {
+		const sysroot = join(import.meta.dir, "vendors", "zig-sysroot");
+		if (existsSync(join(sysroot, "usr", "lib", "libSystem.tbd"))) {
+			env.SDKROOT = sysroot;
+			env.DEVELOPER_DIR = sysroot;
+		}
+	}
+	return env;
 }
 
 async function buildCli() {
