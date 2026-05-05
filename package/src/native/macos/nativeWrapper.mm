@@ -3045,6 +3045,71 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
 @end
 
 // ----------------------- WGPUViewImpl -----------------------
+
+typedef void (*IOSurfaceLayerDisplayCallback)(void *displayContext);
+typedef void (*IOSurfaceLayerResizeCallback)(void *resizeContext);
+
+@interface IOSurfaceLayer: CALayer  {
+    void *_display_ctx;
+    IOSurfaceLayerDisplayCallback _display_cb;
+    BOOL _displaying;
+    void *_resize_ctx;
+    IOSurfaceLayerResizeCallback _resize_cb;
+}
+
+- (void)setDisplayCallback:(IOSurfaceLayerDisplayCallback)displayCallback context:(void *)displayContext;
+- (void)setResizeCallback:(IOSurfaceLayerResizeCallback)resizeCallback context:(void *)resizeContext;
+@end
+
+@implementation IOSurfaceLayer
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _display_ctx = NULL;
+        _display_cb  = NULL;
+        _resize_ctx  = NULL;
+        _resize_cb   = NULL;
+    }
+    return self;
+}
+
+- (id<CAAction>)actionForKey:(NSString *)event {
+    (void)event;
+    return (id<CAAction>)[NSNull null];
+}
+
+- (void)setDisplayCallback:(IOSurfaceLayerDisplayCallback)displayCallback context:(void *)displayContext {
+    _display_cb = displayCallback;
+    _display_ctx = displayContext;
+}
+
+- (void)setResizeCallback:(IOSurfaceLayerResizeCallback)resizeCallback context:(void *)resizeContext {
+    _resize_cb = resizeCallback;
+    _resize_ctx = resizeContext;
+}
+
+- (void)setBounds:(CGRect)bounds {
+    CGRect oldBounds = self.bounds;
+    [super setBounds:bounds];
+
+    if (CGSizeEqualToSize(oldBounds.size, bounds.size)) {
+        return;
+    }
+
+    IOSurfaceLayerResizeCallback resizeCallback = _resize_cb;
+    if (resizeCallback) {
+        resizeCallback(_resize_ctx);
+    }
+}
+
+- (void)display {
+    IOSurfaceLayerDisplayCallback displayCallback = _display_cb;
+    if (displayCallback) {
+        displayCallback(_display_ctx);
+    }
+}
+@end
+
 @interface WGPUInputView : NSView
 @end
 
@@ -3089,10 +3154,10 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                             0);
     }
     - (BOOL)acceptsFirstResponder {
-        return YES;
+        return NO;
     }
     - (BOOL)becomeFirstResponder {
-        return YES;
+        return NO;
     }
     - (void)keyDown:(NSEvent*)event {
         WindowDelegate *delegate = (WindowDelegate *)self.window.delegate;
@@ -3127,32 +3192,18 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
             self.webviewId = webviewId;
 
             dispatch_async(dispatch_get_main_queue(), ^{
-                id<MTLDevice> device = MTLCreateSystemDefaultDevice();
                 NSView *view = [[WGPUInputView alloc] initWithFrame:frame];
-                view.wantsLayer = YES;
                 view.layer.backgroundColor = [[NSColor clearColor] CGColor];
 
-                CAMetalLayer *metalLayer = [CAMetalLayer layer];
-                metalLayer.device = device;
-                metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-                metalLayer.framebufferOnly = NO;
-                metalLayer.opaque = NO;
-                metalLayer.backgroundColor = [[NSColor clearColor] CGColor];
-                metalLayer.presentsWithTransaction = YES;
-                metalLayer.allowsNextDrawableTimeout = NO;
-                CGColorSpaceRef cs = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-                metalLayer.colorspace = cs;
-                CGColorSpaceRelease(cs);
+                IOSurfaceLayer *metalLayer = [IOSurfaceLayer layer];
                 CGFloat scale = window.backingScaleFactor;
                 metalLayer.contentsScale = scale;
-                metalLayer.drawableSize = CGSizeMake(frame.size.width * scale, frame.size.height * scale);
+                metalLayer.needsDisplayOnBoundsChange = YES;
+                metalLayer.contentsGravity = kCAGravityTopLeft;
                 view.layer = metalLayer;
 
-                if (wgpuDebugEnabled()) {
-                    NSLog(@"WGPUViewImpl init: frame=%.1fx%.1f scale=%.2f drawable=%.1fx%.1f",
-                          frame.size.width, frame.size.height, scale,
-                          metalLayer.drawableSize.width, metalLayer.drawableSize.height);
-                }
+                view.wantsLayer = YES;
+                view.clipsToBounds = YES;
 
                 view.autoresizingMask = NSViewNotSizable;
 
@@ -3162,10 +3213,13 @@ runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
                     self.fullSize = NO;
                 }
 
-                [window.contentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
+                [window.contentView addSubview:view positioned:NSWindowBelow relativeTo:nil];
+
+                // Force GPU surfaces to always render below webviews regardless of insertion order.
+                view.layer.zPosition = -1000;
+
                 CGFloat adjustedY = window.contentView.bounds.size.height - frame.origin.y - frame.size.height;
                 view.frame = NSMakeRect(frame.origin.x, adjustedY, frame.size.width, frame.size.height);
-                [window makeFirstResponder:view];
 
                 if (self.pendingStartTransparent) {
                     window.opaque = NO;
@@ -6939,7 +6993,7 @@ extern "C" void* wgpuViewGetNativeHandle(AbstractView *abstractView) {
     dispatch_sync(dispatch_get_main_queue(), ^{
         if (!abstractView.nsView) return;
         CALayer *layer = abstractView.nsView.layer;
-        if ([layer isKindOfClass:[CAMetalLayer class]]) {
+        if (layer) {
             result = (__bridge void*)layer;
         }
     });
@@ -7196,12 +7250,64 @@ extern "C" NSRect createNSRectWrapper(double x, double y, double width, double h
 }
 
 
-@interface ElectrobunWindow : NSWindow
+typedef bool (*KeyHandlerCallback)(void *keyHandlerContext, uint32_t, uint32_t, bool, bool);
+
+@interface ElectrobunWindow : NSWindow {
+    void *_key_handler_ctx;
+    KeyHandlerCallback _key_handler_cb;
+}
+    - (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext;
 @end
 
 @implementation ElectrobunWindow
 - (BOOL)canBecomeKeyWindow { return YES; }
 - (BOOL)canBecomeMainWindow { return YES; }
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _key_handler_ctx = NULL;
+        _key_handler_cb  = NULL;
+    }
+    return self;
+}
+
+- (uint32_t)modifierMaskFromEvent:(NSEvent*)event {
+    uint32_t mods = 0;
+    if ([event modifierFlags] & NSEventModifierFlagShift) mods |= 1 << 0;
+    if ([event modifierFlags] & NSEventModifierFlagControl) mods |= 1 << 1;
+    if ([event modifierFlags] & NSEventModifierFlagOption) mods |= 1 << 2;
+    if ([event modifierFlags] & NSEventModifierFlagCommand) mods |= 1 << 3;
+    return mods;
+}
+
+- (BOOL)shouldConsumeKeyEvent:(NSEvent*)event isDown:(bool)isDown {
+    KeyHandlerCallback keyHandlerCallback = _key_handler_cb;
+
+    if (keyHandlerCallback) {
+        return keyHandlerCallback(_key_handler_ctx, (uint32_t)[event keyCode], [self modifierMaskFromEvent:event], isDown, [event isARepeat]);
+    }
+
+    return false;
+}
+
+- (void)sendEvent:(NSEvent *)event {
+    if (event.type == NSEventTypeKeyDown && [self shouldConsumeKeyEvent:event isDown:YES]) {
+        return;
+    }
+    [super sendEvent:event];
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    if (event.type == NSEventTypeKeyDown && [self shouldConsumeKeyEvent:event isDown:YES]) {
+        return YES;
+    }
+    return [super performKeyEquivalent:event];
+}
+
+- (void)setKeyHandlerCallback:(KeyHandlerCallback)keyHandlerCallback context:(void *)keyHandlerContext {
+    _key_handler_cb = keyHandlerCallback;
+    _key_handler_ctx = keyHandlerContext;
+}
 @end
 
 NSWindow *createNSWindowWithFrameAndStyle(uint32_t windowId,
